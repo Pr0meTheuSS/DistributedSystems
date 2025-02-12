@@ -1,0 +1,7 @@
+[requires]
+userver/2.7
+
+[generators]
+CMakeDeps
+CMakeToolchain
+cmake_find_package
