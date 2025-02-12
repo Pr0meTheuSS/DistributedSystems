@@ -12,8 +12,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/dto/crack_hash_request.hpp
     src/dto/crack_hash_request.cpp
 
-    src/hash_crack_handler.cpp
-    src/hash_crack_handler.hpp
+    src/crack_hash_handler.cpp
+    src/crack_hash_handler.hpp
 )
 
 target_link_libraries(${PROJECT_NAME}_objs userver::core)

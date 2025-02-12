@@ -8,7 +8,7 @@
 #include "hash_crack_handler.hpp"
  
 int main(int argc, char* argv[]) {
-    auto component_list = components::MinimalServerComponentList().Append<samples::hello::HashCrackHandler>();
+    auto component_list = components::MinimalServerComponentList().Append<samples::hello::CrackHashHandler>();
  
     return utils::DaemonMain(argc, argv, component_list);
 }

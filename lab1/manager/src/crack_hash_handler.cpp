@@ -8,7 +8,7 @@
 
 namespace samples::hello {
 
-userver::formats::json::Value HashCrackHandler::HandleRequestJsonThrow(
+userver::formats::json::Value CrackHashHandler::HandleRequestJsonThrow(
     const userver::server::http::HttpRequest& request,
     const userver::formats::json::Value& requestBody,
     userver::server::request::RequestContext&) const

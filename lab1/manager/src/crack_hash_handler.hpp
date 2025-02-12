@@ -8,14 +8,14 @@
 
 namespace samples::hello {
 
-class HashCrackHandler final : public userver::server::handlers::HttpHandlerJsonBase {
+class CrackHashHandler final : public userver::server::handlers::HttpHandlerJsonBase {
 public:
     // `kName` is used as the component name in static config
     static constexpr std::string_view kName = "handler-hash-crack";
 
     // // Component is valid after construction and is able to accept requests
     // using HttpHandlerBase::HttpHandlerBase;
-    HashCrackHandler(const userver::components::ComponentConfig& config,
+    CrackHashHandler(const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context)
         : userver::server::handlers::HttpHandlerJsonBase(config, context) { };
 
