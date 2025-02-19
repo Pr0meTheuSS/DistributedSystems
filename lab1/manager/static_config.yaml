@@ -1,0 +1,69 @@
+components_manager:
+    task_processors: # Task processor is an executor for coroutine tasks
+        main-task-processor: # Make a task processor for CPU-bound coroutine tasks.
+            worker_threads: 4 # Process tasks in 4 threads.
+
+        fs-task-processor: # Make a separate task processor for filesystem bound tasks.
+            worker_threads: 1
+
+    default_task_processor: main-task-processor # Task processor in which components start.
+
+    components: # Configuring components that were registered via component_list
+        server:
+            listener: # configuring the main listening socket...
+                port: 8080 # ...to listen on this port and...
+                task_processor: main-task-processor # ...process incoming requests on this task processor.
+        logging:
+            fs-task-processor: fs-task-processor
+            loggers:
+                default:
+                    file_path: "@stderr"
+                    level: none
+                    overflow_behavior: discard # Drop logs if the system is too busy to write them down.
+
+        service-task-scheduler:
+
+        repository-requests-in-memory:
+
+        dns-client:
+            fs-task-processor: fs-task-processor
+            hosts-file-path: /etc/hosts
+            hosts-file-update-interval: 5m
+            network-timeout: 1s
+            network-attempts: 1
+            network-custom-servers:
+                - 127.0.0.1
+                - 127.0.0.2
+            cache-ways: 16
+            cache-size-per-way: 256
+            cache-max-reply-ttl: 5m
+            cache-failure-ttl: 5s
+
+        service-http-worker-connection:
+
+        factory-workers:
+
+        http-client:
+            # thread-name-prefix: http-client
+            # threads: 2
+            fs-task-processor: fs-task-processor
+            # destination-metrics-auto-max-size: 100
+
+        client-http:
+            service-url: http://localhost:8081
+            load-enabled: true
+
+        handler-hash-crack:
+            path: /api/hash/crack
+            method: POST
+            task_processor: main-task-processor # Run it on CPU bound task processor
+
+        handler-hash-status:
+            path: /api/hash/status
+            method: GET
+            task_processor: main-task-processor # Run it on CPU bound task processor
+
+        handler-crack-hash-status:
+            path: /internal/api/manager/hash/crack/request
+            method: PATCH
+            task_processor: main-task-processor # Run it on CPU bound task processor
