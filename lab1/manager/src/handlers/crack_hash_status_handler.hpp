@@ -5,7 +5,7 @@
 
 #include <userver/utest/using_namespace_userver.hpp>
 
-#include <components/task_scheduler_component.hpp>
+#include "components/task_scheduler_component.hpp"
 
 namespace Manager {
 

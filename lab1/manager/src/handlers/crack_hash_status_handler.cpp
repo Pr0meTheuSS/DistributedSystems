@@ -5,10 +5,6 @@
 
 #include "dto/crack_hash_patch_status_request.hpp"
 
-// #include "dto/crack_hash_response.hpp"
-// #include "models/crack_request.hpp"
-// #include "services/task_scheduler.hpp"
-
 namespace Manager {
 
 CrackHashStatusHandler::CrackHashStatusHandler(const userver::components::ComponentConfig& config,

@@ -3,8 +3,8 @@
 #include <userver/clients/http/component.hpp>
 #include <userver/components/loggable_component_base.hpp>
 
-#include <clients/http_client.hpp>
-#include <models/worker_connection.hpp>
+#include "clients/http_client.hpp"
+#include "models/worker_connection.hpp"
 
 namespace Manager {
 

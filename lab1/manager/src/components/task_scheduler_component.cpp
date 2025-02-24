@@ -3,10 +3,10 @@
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 
-#include <clients/http_client.hpp>
-#include <components/workers_factory_component.hpp>
-#include <repositories/requests_repository.hpp>
-#include <services/round_robin_distributor.hpp>
+#include "clients/http_client.hpp"
+#include "components/workers_factory_component.hpp"
+#include "repositories/requests_repository.hpp"
+#include "services/round_robin_distributor.hpp"
 
 namespace Manager {
 

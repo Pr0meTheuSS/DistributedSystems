@@ -1,25 +1,8 @@
-#include <dto/crack_hash_patch_status_request.hpp>
+#include "dto/crack_hash_patch_status_request.hpp"
 
 #include <userver/formats/json/value_builder.hpp>
 
 namespace {
-
-// std::string CrackStatusToString(const CrackStatus& status)
-// {
-//     switch (status) {
-//     case CrackStatus::IN_PROGESS:
-//         return "IN_PROGRESS";
-//     case CrackStatus::ERROR:
-//         return "ERROR";
-//     case CrackStatus::READY:
-//         return "READY";
-//     case CrackStatus::UNDEFINED:
-//         return "UNDEFINED";
-
-//     default:
-//         return {};
-//     }
-// }
 
 Manager::CrackStatus CrackStatusFromString(const std::string& statusString)
 {

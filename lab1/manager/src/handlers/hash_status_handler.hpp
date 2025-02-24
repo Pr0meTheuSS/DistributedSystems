@@ -3,7 +3,7 @@
 #include <userver/components/component_list.hpp>
 #include <userver/server/handlers/http_handler_json_base.hpp>
 
-#include <components/task_scheduler_component.hpp>
+#include "components/task_scheduler_component.hpp"
 
 namespace Manager {
 

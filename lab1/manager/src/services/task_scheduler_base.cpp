@@ -6,13 +6,13 @@
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 
-#include <dto/crack_hash_request.hpp>
-#include <dto/crack_hash_response.hpp>
-#include <models/crack_request.hpp>
-#include <models/task.hpp>
-#include <repositories/requests_repository.hpp>
-#include <repositories/requests_repository_in_memory.hpp>
-#include <services/task_distribution_policy.hpp>
+#include "dto/crack_hash_request.hpp"
+#include "dto/crack_hash_response.hpp"
+#include "models/crack_request.hpp"
+#include "models/task.hpp"
+#include "repositories/requests_repository.hpp"
+#include "repositories/requests_repository_in_memory.hpp"
+#include "services/task_distribution_policy.hpp"
 
 namespace Manager {
 

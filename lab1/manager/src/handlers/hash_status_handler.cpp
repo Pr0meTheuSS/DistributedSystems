@@ -3,7 +3,6 @@
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 
-// #include "dto/hash_status_response.hpp"
 #include "components/task_scheduler_component.hpp"
 #include "dto/crack_hash_status_response.hpp"
 #include "models/crack_request.hpp"

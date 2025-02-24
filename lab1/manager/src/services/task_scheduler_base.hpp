@@ -2,10 +2,10 @@
 
 #include <userver/components/loggable_component_base.hpp>
 
-#include <components/http_worker_connection.hpp>
-#include <models/worker.hpp>
-#include <repositories/requests_repository.hpp>
-#include <services/task_distribution_policy.hpp>
+#include "components/http_worker_connection.hpp"
+#include "models/worker.hpp"
+#include "repositories/requests_repository.hpp"
+#include "services/task_distribution_policy.hpp"
 
 namespace Manager {
 

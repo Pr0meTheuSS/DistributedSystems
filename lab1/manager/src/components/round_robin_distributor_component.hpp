@@ -5,9 +5,9 @@
 
 #include <libenvpp/env.hpp>
 
-#include <models/worker_connection.hpp>
-#include <services/round_robin_distributor.hpp>
-#include <services/task_distribution_policy.hpp>
+#include "models/worker_connection.hpp"
+#include "services/round_robin_distributor.hpp"
+#include "services/task_distribution_policy.hpp"
 
 namespace Manager {
 

@@ -1,10 +1,10 @@
-#include <components/http_worker_connection.hpp>
+#include "components/http_worker_connection.hpp"
 
 #include <userver/clients/http/component.hpp>
 #include <userver/components/loggable_component_base.hpp>
 #include <userver/formats/json/value_builder.hpp>
 
-#include <models/task.hpp>
+#include "models/task.hpp"
 
 namespace Manager {
 
