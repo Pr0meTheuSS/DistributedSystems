@@ -12,7 +12,7 @@ namespace Manager {
 
 struct CrackHashRequest final {
     std::string hash;
-    int maxLength;
+    std::size_t maxLength;
 };
 
 CrackHashRequest Parse(const userver::formats::json::Value&,

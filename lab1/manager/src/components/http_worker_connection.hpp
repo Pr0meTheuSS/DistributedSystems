@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <userver/clients/http/component.hpp>
 #include <userver/components/loggable_component_base.hpp>
 
@@ -19,7 +21,7 @@ public:
         const userver::components::ComponentContext&);
 
     ~HttpWorkerConnection() override = default;
-    bool Send(const Task&) override;
+    bool Send(const SubTask&) override;
 
     void SetUrl(std::string url)
     {

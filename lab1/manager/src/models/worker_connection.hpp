@@ -1,13 +1,13 @@
 #pragma once
 
-#include "models/task.hpp"
+#include "models/sub_task.hpp"
 
 namespace Manager {
 
 class WorkerConnection {
 public:
     ~WorkerConnection() = default;
-    virtual bool Send(const Task&) = 0;
+    virtual bool Send(const SubTask&) = 0;
 };
 
 } // Manager

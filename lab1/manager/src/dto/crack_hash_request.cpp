@@ -13,7 +13,7 @@ CrackHashRequest Parse(const userver::formats::json::Value& json,
 
     return CrackHashRequest {
         json["hash"].As<std::string>(),
-        json["maxLength"].As<int>()
+        json["maxLength"].As<std::size_t>()
     };
 }
 

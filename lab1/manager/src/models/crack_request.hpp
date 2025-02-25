@@ -14,7 +14,7 @@ enum class CrackStatus {
 struct CrackRequest final {
     std::string id;
     std::string hash;
-    int maxLength;
+    std::size_t maxLength;
     CrackStatus status;
 };
 

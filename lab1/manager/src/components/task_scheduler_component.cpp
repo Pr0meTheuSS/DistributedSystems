@@ -6,14 +6,12 @@
 #include "clients/http_client.hpp"
 #include "components/workers_factory_component.hpp"
 #include "repositories/requests_repository.hpp"
-#include "services/round_robin_distributor.hpp"
 
 namespace Manager {
 
 TaskSchedulerComponent::TaskSchedulerComponent(const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context)
     : TaskSchedulerBase(context.FindComponent<RequestsRepository>("repository-requests-in-memory"),
-          distributor,
           context.FindComponent<WorkersFactoryComponent>("factory-workers").getWorkers())
     , userver::components::LoggableComponentBase(config, context)
 {

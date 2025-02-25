@@ -4,7 +4,7 @@
 #include <userver/components/loggable_component_base.hpp>
 #include <userver/formats/json/value_builder.hpp>
 
-#include "models/task.hpp"
+#include "models/sub_task.hpp"
 
 namespace Manager {
 
@@ -15,14 +15,14 @@ HttpWorkerConnection::HttpWorkerConnection(const userver::components::ComponentC
 {
 }
 
-bool HttpWorkerConnection::Send(const Task& task)
+bool HttpWorkerConnection::Send(const SubTask& task)
 {
     auto taskJson = userver::formats::json::ValueBuilder(task).ExtractValue();
 
     const auto response = m_httpClient.CreateHttpRequest(
         userver::formats::json::ToStableString(taskJson),
-        m_url);
+        this->m_url);
     return true;
 }
 
-} // Manager
+} // namespace Manager

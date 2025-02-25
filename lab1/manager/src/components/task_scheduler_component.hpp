@@ -3,7 +3,6 @@
 #include <userver/components/loggable_component_base.hpp>
 
 #include "clients/http_client.hpp"
-#include "services/round_robin_distributor.hpp"
 #include "services/task_scheduler_base.hpp"
 
 namespace Manager {
@@ -22,9 +21,6 @@ public:
     using TaskSchedulerBase::GetStatus;
     using TaskSchedulerBase::Schedule;
     using TaskSchedulerBase::UpdateStatus;
-
-private:
-    RoundRobinDistributor distributor;
 };
 
 } // namespace Manager

@@ -52,5 +52,13 @@ add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
  
 # 
 # Makes a virtualenv suitable for running pytests from `test` directory and integrates with `ctest`.
-userver_testsuite_add_simple()
+userver_testsuite_add_simple(
+    # SERVICE_TARGET ${PROJECT_NAME}
+    # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    # PYTHON_BINARY ${TESTSUITE_PYTHON_BINARY}
+    # PYTEST_ARGS
+    # --service-config=${CMAKE_CURRENT_SOURCE_DIR}/static_config.yaml
+    # --service-binary=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}
+    # # --service-config-vars=${CMAKE_CURRENT_SOURCE_DIR}/config_vars.yaml
+)
 

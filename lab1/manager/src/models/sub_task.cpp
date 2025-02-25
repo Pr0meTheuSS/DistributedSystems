@@ -4,11 +4,11 @@
 
 #include <userver/formats/json/value_builder.hpp>
 
-#include "models/task.hpp"
+#include "models/sub_task.hpp"
 
 namespace Manager {
 
-userver::formats::json::Value Serialize(const Task& task,
+userver::formats::json::Value Serialize(const SubTask& task,
     userver::formats::serialize::To<userver::formats::json::Value>)
 {
     userver::formats::json::ValueBuilder builder;
@@ -16,6 +16,8 @@ userver::formats::json::Value Serialize(const Task& task,
     builder["hash"] = task.hash;
     builder["maxLength"] = task.maxLength;
     builder["requestId"] = task.requestId;
+    builder["partNumber"] = task.partNumber;
+    builder["partCount"] = task.partCount;
 
     return builder.ExtractValue();
 }

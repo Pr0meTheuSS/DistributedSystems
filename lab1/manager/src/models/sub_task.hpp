@@ -8,13 +8,16 @@
 
 namespace Manager {
 
-struct Task final {
+struct SubTask final {
     std::string requestId;
     std::string hash;
+
     std::size_t maxLength;
+    std::size_t partCount;
+    std::size_t partNumber;
 };
 
-userver::formats::json::Value Serialize(const Task& task,
+userver::formats::json::Value Serialize(const SubTask&,
     userver::formats::serialize::To<userver::formats::json::Value>);
 
 } // Manager
