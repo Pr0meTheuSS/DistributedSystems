@@ -18,7 +18,9 @@ public:
     TaskSchedulerComponent(const userver::components::ComponentConfig&,
         const userver::components::ComponentContext&);
 
+    using TaskSchedulerBase::getAnswer;
     using TaskSchedulerBase::GetStatus;
+    using TaskSchedulerBase::saveWorkerAnswer;
     using TaskSchedulerBase::Schedule;
     using TaskSchedulerBase::UpdateStatus;
 };

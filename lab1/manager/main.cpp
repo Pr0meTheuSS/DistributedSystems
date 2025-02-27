@@ -13,6 +13,7 @@
 #include "handlers/crack_hash_handler.hpp"
 #include "handlers/crack_hash_status_handler.hpp"
 #include "handlers/hash_status_handler.hpp"
+#include "handlers/worker_answer_handler.hpp"
 #include "repositories/requests_repository_in_memory.hpp"
 
 int main(int argc, char* argv[])
@@ -23,6 +24,7 @@ int main(int argc, char* argv[])
                               .Append<userver::clients::dns::Component>()
                               .Append<Manager::HttpClient>()
                               .Append<Manager::HttpWorkerConnection>()
+                              .Append<Manager::WorkerAnswerHandler>()
                               .Append<Manager::CrackHashHandler>()
                               .Append<Manager::CrackHashStatusHandler>()
                               .Append<Manager::HashStatusHandler>()

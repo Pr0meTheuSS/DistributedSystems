@@ -58,6 +58,11 @@ components_manager:
             method: POST
             task_processor: main-task-processor # Run it on CPU bound task processor
 
+        handler-worker-answer:
+            path: /internal/api/hash/crack/aswer
+            method: GET
+            task_processor: main-task-processor # Run it on CPU bound task processor
+
         handler-hash-status:
             path: /api/hash/status
             method: GET
@@ -65,5 +70,5 @@ components_manager:
 
         handler-crack-hash-status:
             path: /internal/api/manager/hash/crack/request
-            method: PATCH
+            method: PATCH,POST
             task_processor: main-task-processor # Run it on CPU bound task processor
