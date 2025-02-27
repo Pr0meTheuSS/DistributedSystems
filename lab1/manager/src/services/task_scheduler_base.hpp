@@ -27,9 +27,9 @@ public:
     virtual bool UpdateStatus(const CrackRequest&);
     virtual void completeSubTask(const std::string&, std::size_t);
     virtual std::optional<CrackRequest> GetStatus(const std::string&) const;
-    virtual void saveWorkerAnswer(const WorkerAnswer&) { };
 
-    virtual std::optional<WorkerAnswer> getAnswer(const std::string&) { return std::nullopt; };
+    virtual std::optional<WorkerAnswer> saveWorkerAnswer(const WorkerAnswer&);
+    virtual std::optional<WorkerAnswer> getAnswer(const std::string&) const;
 
 private:
     std::vector<SubTask> separateToSubTasks(const Task& task);
@@ -39,6 +39,7 @@ private:
     RequestsRepository& m_repository;
     std::vector<Worker> m_workers;
 
+    // TODO: abstraction leak
     userver::engine::Mutex m_mutex;
 
     std::unordered_map<std::string, std::vector<bool>> taskCompletionMap;

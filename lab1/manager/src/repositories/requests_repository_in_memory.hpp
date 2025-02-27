@@ -3,7 +3,9 @@
 #include <unordered_map>
 
 #include <userver/components/loggable_component_base.hpp>
+#include <userver/engine/mutex.hpp>
 
+#include "dto/worker_answer.hpp"
 #include "models/crack_request.hpp"
 #include "repositories/requests_repository.hpp"
 
@@ -24,8 +26,13 @@ public:
     std::optional<CrackRequest> Create(const CrackRequest& request) override;
     std::optional<CrackRequest> UpdateStatus(const CrackRequest&) override;
 
+    std::optional<WorkerAnswer> GetAnswerByUUID(const std::string&) const override;
+    std::optional<WorkerAnswer> SaveAnswer(const WorkerAnswer&) override;
+
 private:
     std::unordered_map<std::string, CrackRequest> m_crackRequests;
+    std::unordered_map<std::string, WorkerAnswer> m_workerAnswers;
+    mutable userver::engine::Mutex m_mutex;
 };
 
-} // namespace Managerauto
+} // namespace Manager

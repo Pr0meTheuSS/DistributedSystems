@@ -155,5 +155,15 @@ void TaskSchedulerBase::completeSubTask(const std::string& requestId, std::size_
     }
 }
 
+std::optional<WorkerAnswer> TaskSchedulerBase::saveWorkerAnswer(const WorkerAnswer& answer)
+{
+    return m_repository.SaveAnswer(answer);
+}
+
+std::optional<WorkerAnswer> TaskSchedulerBase::getAnswer(const std::string& id) const
+{
+    return m_repository.GetAnswerByUUID(id);
+}
+
 } // namespace Manager
 

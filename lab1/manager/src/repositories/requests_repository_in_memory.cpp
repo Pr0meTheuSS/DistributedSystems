@@ -14,15 +14,19 @@ RequestsRepositoryInMemory::RequestsRepositoryInMemory(const userver::components
     const userver::components::ComponentContext& context)
     : userver::components::LoggableComponentBase(config, context) { };
 
-RequestsRepositoryInMemory::~RequestsRepositoryInMemory() { };
+RequestsRepositoryInMemory::~RequestsRepositoryInMemory() = default;
 
 std::optional<CrackRequest> RequestsRepositoryInMemory::GetByUUID(const std::string& uuid) const
 {
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+
     return m_crackRequests.contains(uuid) ? std::optional { m_crackRequests.at(uuid) } : std::nullopt;
 }
 
 std::optional<CrackRequest> RequestsRepositoryInMemory::Create(const CrackRequest& request)
 {
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+
     CrackRequest newCrackRequest {
         .id = sole::uuid0().str(),
         .hash = request.hash,
@@ -36,11 +40,26 @@ std::optional<CrackRequest> RequestsRepositoryInMemory::Create(const CrackReques
 
 std::optional<CrackRequest> RequestsRepositoryInMemory::UpdateStatus(const CrackRequest& crackRequest)
 {
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+
     if (m_crackRequests.contains(crackRequest.id)) {
         m_crackRequests[crackRequest.id].status = crackRequest.status;
         return m_crackRequests[crackRequest.id];
     }
     return std::nullopt;
+}
+
+std::optional<WorkerAnswer> RequestsRepositoryInMemory::GetAnswerByUUID(const std::string& id) const
+{
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+    return m_workerAnswers.contains(id) ? std::optional { m_workerAnswers.at(id) } : std::nullopt;
+}
+
+std::optional<WorkerAnswer> RequestsRepositoryInMemory::SaveAnswer(const WorkerAnswer& answer)
+{
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+    auto [inserted, ok] = m_workerAnswers.insert({ answer.requestId, answer });
+    return ok ? std::optional<WorkerAnswer>(inserted->second) : std::nullopt;
 }
 
 } // namespace Managerauto
