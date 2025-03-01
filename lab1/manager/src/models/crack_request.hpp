@@ -8,6 +8,7 @@ enum class CrackStatus {
     IN_PROGRESS,
     READY,
     ERROR,
+    IN_QUEUE,
     UNDEFINED
 };
 

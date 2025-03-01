@@ -4,7 +4,7 @@
 #include <userver/formats/parse/common_containers.hpp>
 #include <userver/formats/serialize/common_containers.hpp>
 
-namespace Manager {
+namespace Worker {
 
 WorkerAnswer Parse(const userver::formats::json::Value& json,
     userver::formats::parse::To<WorkerAnswer>)
@@ -27,7 +27,7 @@ userver::formats::json::Value Serialize(const WorkerAnswer& answer,
 
     builder["requestId"] = answer.requestId;
     builder["partNumber"] = answer.partNumber;
-    builder["words"] = answer.words;
+    builder["partNumber"] = answer.words;
 
     return builder.ExtractValue();
 }

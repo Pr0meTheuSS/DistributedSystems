@@ -1,0 +1,6 @@
+.vscode/
+.cmake/
+.pytest_cache/
+build/
+CMakeFiles/
+.cov-gen

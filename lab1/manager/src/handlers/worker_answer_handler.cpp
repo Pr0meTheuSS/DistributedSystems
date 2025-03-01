@@ -36,7 +36,7 @@ userver::formats::json::Value WorkerAnswerHandler::HandleRequestJsonThrow(
         }
 
         request.SetResponseStatus(userver::server::http::HttpStatus::kOk);
-        return userver::formats::json::ValueBuilder(workerAnswer).ExtractValue();
+        return userver::formats::json::ValueBuilder(workerAnswer.value()).ExtractValue();
     }
     default: {
         throw userver::server::handlers::ClientError(userver::server::handlers::ExternalBody {

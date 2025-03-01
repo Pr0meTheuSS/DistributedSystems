@@ -15,13 +15,14 @@
 #include "models/task.hpp"
 #include "repositories/requests_repository.hpp"
 #include "repositories/requests_repository_in_memory.hpp"
-#include "services/task_distribution_policy.hpp"
 
 namespace Manager {
 
 TaskSchedulerBase::TaskSchedulerBase(RequestsRepository& repository,
+    TasksRepository& tasksRepository,
     std::vector<Worker> workers)
     : m_repository(repository)
+    , m_tasksRepo(tasksRepository)
     , m_workers(workers)
 {
 }
@@ -42,6 +43,7 @@ CrackRequest TaskSchedulerBase::Schedule(const CrackRequest& crackRequest)
         newCrackRequest.status = CrackStatus::ERROR;
         return newCrackRequest;
     }
+    newCrackRequest = created.value();
 
     Task task {
         .requestId = created.value().id,
@@ -50,10 +52,34 @@ CrackRequest TaskSchedulerBase::Schedule(const CrackRequest& crackRequest)
     };
 
     std::vector<SubTask> subTasks = separateToSubTasks(task);
-    registerSubTasks(subTasks);
-    distributeForReadyWorkers();
+    m_tasksRepo.registerSubTasks(subTasks);
+    if (!distributeForReadyWorkers()) {
+        newCrackRequest.status = CrackStatus::IN_QUEUE;
+        return newCrackRequest;
+    }
 
-    return created.value();
+    return newCrackRequest;
+}
+
+std::vector<SubTask> TaskSchedulerBase::separateToSubTasks(const Task& task)
+{
+    std::size_t partCount = m_workers.size();
+    std::size_t partNumber = 0;
+
+    std::vector<SubTask> subTasks;
+    subTasks.reserve(partCount);
+
+    for (; partNumber < partCount; partNumber++) {
+        SubTask subTask {
+            .requestId = task.requestId,
+            .hash = task.hash,
+            .maxLength = task.maxLength,
+            .partCount = partCount,
+            .partNumber = partNumber
+        };
+        subTasks.emplace_back(std::move(subTask));
+    }
+    return subTasks;
 }
 
 bool TaskSchedulerBase::UpdateStatus(const CrackRequest& crackRequst)
@@ -66,91 +92,49 @@ std::optional<CrackRequest> TaskSchedulerBase::GetStatus(const std::string& id) 
     return m_repository.GetByUUID(id);
 }
 
-std::vector<SubTask> TaskSchedulerBase::separateToSubTasks(const Task& task)
+std::vector<Worker*> TaskSchedulerBase::getReadyWorkers()
 {
-    size_t partCount = m_workers.size();
-    std::vector<SubTask> subTasks;
-    subTasks.reserve(partCount);
-
-    std::cout << "[INFO] Разделяем задачу " << task.requestId << " на " << partCount << " частей\n";
-
-    for (size_t i = 0; i < partCount; ++i) {
-        subTasks.push_back({
-            .requestId = task.requestId,
-            .hash = task.hash,
-            .maxLength = task.maxLength,
-            .partCount = partCount,
-            .partNumber = i,
-        });
-        std::cout << "[INFO] Создана подзадача " << task.requestId << " #" << i << "\n";
-    }
-    return subTasks;
-}
-
-// Регистрация тасок в системе
-void TaskSchedulerBase::registerSubTasks(const std::vector<SubTask>& subTasks)
-{
-    if (subTasks.empty())
-        return;
-
-    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
-    taskCompletionMap[subTasks[0].requestId] = std::vector<bool>(subTasks.size(), false);
-
-    for (const auto& subTask : subTasks) {
-        taskQueue.push(subTask);
-    }
-
-    std::cout << "[INFO] Зарегистрированы подзадачи для " << subTasks[0].requestId
-              << " (всего " << subTasks.size() << " частей), добавлены в очередь\n";
-}
-
-// Распределение задач по свободным воркерам
-void TaskSchedulerBase::distributeForReadyWorkers()
-{
-    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
-
-    std::cout << "[INFO] Начинаем распределение задач по свободным воркерам\n";
-
+    std::vector<Worker*> readyWorkers;
     for (auto& worker : m_workers) {
-        if (!worker.isReady() || taskQueue.empty())
-            continue;
-
-        SubTask task = taskQueue.front();
-        taskQueue.pop();
-
-        worker.Process(task);
-        taskWorkerMap[task.requestId + "_" + std::to_string(task.partNumber)] = &worker;
-
-        std::cout << "[INFO] Воркер " << &worker << " взял подзадачу " << task.requestId
-                  << " #" << task.partNumber << " в работу\n";
+        if (worker.isReady()) {
+            readyWorkers.push_back(&worker);
+        }
     }
+    return readyWorkers;
 }
 
-// Завершение подзадачи
+bool TaskSchedulerBase::distributeForReadyWorkers()
+{
+    auto readyWorkers = getReadyWorkers();
+    if (readyWorkers.empty()) {
+        std::cout << "[INFO] Нет свободных воркеров\n";
+        return false;
+    }
+
+    for (auto* worker : readyWorkers) {
+        auto taskOpt = m_tasksRepo.getNextSubTask();
+        if (!taskOpt)
+            break;
+
+        m_taskWorkerMap[taskOpt->requestId + "_" + std::to_string(taskOpt->partNumber)] = worker;
+        worker->Process(*taskOpt);
+    }
+
+    return true;
+}
+
 void TaskSchedulerBase::completeSubTask(const std::string& requestId, std::size_t partNumber)
 {
-    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
-
-    auto it = taskCompletionMap.find(requestId);
-    if (it == taskCompletionMap.end())
-        return;
-
-    it->second[partNumber] = true;
-    std::cout << "[INFO] Завершена подзадача " << requestId << " #" << partNumber << "\n";
-
-    if (std::all_of(it->second.begin(), it->second.end(), [](bool completed) { return completed; })) {
-        std::cout << "[INFO] Все подзадачи " << requestId << " завершены. Очищаем мета-данные\n";
-
-        taskCompletionMap.erase(it);
-        taskWorkerMap.erase(requestId);
-    }
+    m_tasksRepo.completeSubTask(requestId, partNumber);
 
     std::string taskKey = requestId + "_" + std::to_string(partNumber);
-    auto workerIt = taskWorkerMap.find(taskKey);
-    if (workerIt != taskWorkerMap.end()) {
+    auto workerIt = m_taskWorkerMap.find(taskKey);
+    if (workerIt != m_taskWorkerMap.end()) {
         workerIt->second->setReady();
-        taskWorkerMap.erase(workerIt);
-        std::cout << "[INFO] Воркер освободился, ищем новую задачу\n";
+        m_taskWorkerMap.erase(workerIt);
+    }
+
+    if (!m_tasksRepo.areAllSubTasksCompleted(requestId)) {
         distributeForReadyWorkers();
     }
 }
