@@ -1,0 +1,64 @@
+components_manager:
+    task_processors: # Task processor is an executor for coroutine tasks
+        main-task-processor: # Make a task processor for CPU-bound coroutine tasks.
+            worker_threads: 4 # Process tasks in 4 threads.
+
+        fs-task-processor: # Make a separate task processor for filesystem bound tasks.
+            worker_threads: 1
+
+        workers-task-processor:
+            thread_name: bg-worker
+            worker_threads: 2
+            os-scheduling: idle
+            task-processor-queue: global-task-queue
+            task-trace:
+                every: 1000
+                max-context-switch-count: 1000
+                logger: default
+
+    default_task_processor: main-task-processor # Task processor in which components start.
+
+    components: # Configuring components that were registered via component_list
+        server:
+            listener: # configuring the main listening socket...
+                port: 8081 # ...to listen on this port and...
+                task_processor: main-task-processor # ...process incoming requests on this task processor.
+        logging:
+            fs-task-processor: fs-task-processor
+            loggers:
+                default:
+                    file_path: "@stderr"
+                    level: debug
+                    overflow_behavior: discard # Drop logs if the system is too busy to write them down.
+        component-brute-force-service:
+
+        component-http-manager-connection:
+
+        dns-client:
+            fs-task-processor: fs-task-processor
+            hosts-file-path: /etc/hosts
+            hosts-file-update-interval: 5m
+            network-timeout: 1s
+            network-attempts: 1
+            network-custom-servers:
+                - 127.0.0.1
+                - 127.0.0.2
+            cache-ways: 16
+            cache-size-per-way: 256
+            cache-max-reply-ttl: 5m
+            cache-failure-ttl: 5s
+
+        http-client:
+            # thread-name-prefix: http-client
+            # threads: 2
+            fs-task-processor: fs-task-processor
+            # destination-metrics-auto-max-size: 100
+
+        client-http:
+            service-url: http://localhost:8080
+            load-enabled: true
+
+        handler-hash-crack:
+            path: /api/hash/crack
+            method: POST
+            task_processor: main-task-processor # Run it on CPU bound task processor

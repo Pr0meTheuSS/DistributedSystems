@@ -1,0 +1,10 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "/home/prometheus/\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0441\u0442\u043e\u043b/DS/DistributedSystems/lab1/manager/build/Release/generators/CMakePresets.json",
+        "build/Release/generators/CMakePresets.json"
+    ]
+}
