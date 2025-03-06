@@ -8,7 +8,7 @@ Worker::Worker(std::shared_ptr<WorkerConnection> connection)
 {
 }
 
-void Worker::Process(const SubTask& task)
+void Worker::process(const SubTask& task)
 {
     m_connection->Send(task);
 }

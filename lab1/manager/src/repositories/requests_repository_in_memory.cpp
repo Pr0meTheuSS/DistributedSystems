@@ -38,6 +38,18 @@ std::optional<CrackRequest> RequestsRepositoryInMemory::Create(const CrackReques
     return ok ? std::optional<CrackRequest>(inserted->second) : std::nullopt;
 }
 
+std::optional<CrackRequest> RequestsRepositoryInMemory::UpdateStatus(const std::string& id, const CrackStatus& status)
+{
+    std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+
+    if (m_crackRequests.contains(id)) {
+        m_crackRequests[id].status = status;
+        return m_crackRequests[id];
+    }
+
+    return std::nullopt;
+}
+
 std::optional<CrackRequest> RequestsRepositoryInMemory::UpdateStatus(const CrackRequest& crackRequest)
 {
     std::lock_guard<userver::engine::Mutex> lock(m_mutex);
@@ -58,6 +70,15 @@ std::optional<WorkerAnswer> RequestsRepositoryInMemory::GetAnswerByUUID(const st
 std::optional<WorkerAnswer> RequestsRepositoryInMemory::SaveAnswer(const WorkerAnswer& answer)
 {
     std::lock_guard<userver::engine::Mutex> lock(m_mutex);
+
+    if (m_workerAnswers.contains(answer.requestId)) {
+        auto oldAnswer = m_workerAnswers.at(answer.requestId);
+
+        oldAnswer.words.insert(oldAnswer.words.end(), answer.words.begin(), answer.words.end());
+        auto [inserted, ok] = m_workerAnswers.insert({ oldAnswer.requestId, oldAnswer });
+        return ok ? std::optional<WorkerAnswer>(inserted->second) : std::nullopt;
+    }
+
     auto [inserted, ok] = m_workerAnswers.insert({ answer.requestId, answer });
     return ok ? std::optional<WorkerAnswer>(inserted->second) : std::nullopt;
 }

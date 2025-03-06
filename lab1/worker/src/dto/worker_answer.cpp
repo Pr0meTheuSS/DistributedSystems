@@ -27,7 +27,7 @@ userver::formats::json::Value Serialize(const WorkerAnswer& answer,
 
     builder["requestId"] = answer.requestId;
     builder["partNumber"] = answer.partNumber;
-    builder["partNumber"] = answer.words;
+    builder["words"] = answer.words;
 
     return builder.ExtractValue();
 }

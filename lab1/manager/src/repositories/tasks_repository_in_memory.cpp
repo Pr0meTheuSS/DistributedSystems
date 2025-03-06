@@ -19,7 +19,7 @@ void TasksRepositoryInMemory::registerSubTasks(const std::vector<SubTask>& subTa
     std::lock_guard lock(m_mutex);
     for (const auto& subTask : subTasks) {
         taskQueue.push(subTask);
-        taskCompletionMap[subTask.requestId].push_back(false);
+        m_taskCompletionMap[subTask.requestId].push_back(false);
     }
 }
 
@@ -37,20 +37,32 @@ std::optional<SubTask> TasksRepositoryInMemory::getNextSubTask()
 void TasksRepositoryInMemory::completeSubTask(const std::string& requestId, std::size_t partNumber)
 {
     std::lock_guard lock(m_mutex);
-    if (taskCompletionMap.find(requestId) != taskCompletionMap.end()) {
-        taskCompletionMap[requestId][partNumber] = true;
+    if (m_taskCompletionMap.find(requestId) != m_taskCompletionMap.end()) {
+        m_taskCompletionMap[requestId][partNumber] = true;
     }
 }
 
 bool TasksRepositoryInMemory::areAllSubTasksCompleted(const std::string& requestId) const
 {
     std::lock_guard lock(m_mutex);
-    auto it = taskCompletionMap.find(requestId);
-    if (it == taskCompletionMap.end()) {
+    auto it = m_taskCompletionMap.find(requestId);
+    if (it == m_taskCompletionMap.end()) {
         return false;
     }
     const auto& completionMap = it->second;
     return std::all_of(completionMap.begin(), completionMap.end(), [](bool completed) { return completed; });
+}
+
+std::size_t TasksRepositoryInMemory::getPartsCount(const std::string& requestId) const
+{
+    std::lock_guard lock(m_mutex);
+    auto it = m_taskCompletionMap.find(requestId);
+    if (it == m_taskCompletionMap.end()) {
+        return 0;
+    }
+    const auto& completionMap = it->second;
+
+    return completionMap.size();
 }
 
 } // namespace Manager

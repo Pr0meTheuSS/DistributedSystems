@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <queue>
 #include <unordered_map>
 
@@ -25,8 +26,10 @@ public:
     void completeSubTask(const std::string& requestId, std::size_t partNumber) override;
     bool areAllSubTasksCompleted(const std::string& requestId) const override;
 
+    std::size_t getPartsCount(const std::string&) const override;
+
 private:
-    std::unordered_map<std::string, std::vector<bool>> taskCompletionMap;
+    std::unordered_map<std::string, std::vector<bool>> m_taskCompletionMap;
     std::queue<SubTask> taskQueue;
     mutable userver::engine::Mutex m_mutex;
 };

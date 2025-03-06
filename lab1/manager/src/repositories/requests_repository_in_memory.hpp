@@ -25,6 +25,7 @@ public:
     std::optional<CrackRequest> GetByUUID(const std::string& uuid) const override;
     std::optional<CrackRequest> Create(const CrackRequest& request) override;
     std::optional<CrackRequest> UpdateStatus(const CrackRequest&) override;
+    std::optional<CrackRequest> UpdateStatus(const std::string&, const CrackStatus&) override;
 
     std::optional<WorkerAnswer> GetAnswerByUUID(const std::string&) const override;
     std::optional<WorkerAnswer> SaveAnswer(const WorkerAnswer&) override;

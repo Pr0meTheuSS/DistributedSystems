@@ -61,6 +61,18 @@ CrackRequest TaskSchedulerBase::Schedule(const CrackRequest& crackRequest)
     return newCrackRequest;
 }
 
+void TaskSchedulerBase::setLastPingFromWorkerBySubtask(const SubTask& subTask)
+{
+    std::string key = subTask.requestId + "_" + std::to_string(subTask.partNumber);
+    m_subTaskPings.insert({ key, std::chrono::system_clock::now() });
+}
+
+std::optional<std::chrono::high_resolution_clock::time_point> TaskSchedulerBase::getLastPingFromWorkerBySubtask(const std::string& id, std::size_t partNumber) const
+{
+    std::string key = id + "_" + std::to_string(partNumber);
+    return m_subTaskPings.contains(key) ? std::optional<std::chrono::high_resolution_clock::time_point> { m_subTaskPings.at(key) } : std::nullopt;
+}
+
 std::vector<SubTask> TaskSchedulerBase::separateToSubTasks(const Task& task)
 {
     std::size_t partCount = m_workers.size();
@@ -85,6 +97,11 @@ std::vector<SubTask> TaskSchedulerBase::separateToSubTasks(const Task& task)
 bool TaskSchedulerBase::UpdateStatus(const CrackRequest& crackRequst)
 {
     return m_repository.UpdateStatus(crackRequst).has_value();
+}
+
+bool TaskSchedulerBase::UpdateStatus(const std::string& id, const CrackStatus& status)
+{
+    return m_repository.UpdateStatus(id, status).has_value();
 }
 
 std::optional<CrackRequest> TaskSchedulerBase::GetStatus(const std::string& id) const
@@ -117,7 +134,7 @@ bool TaskSchedulerBase::distributeForReadyWorkers()
             break;
 
         m_taskWorkerMap[taskOpt->requestId + "_" + std::to_string(taskOpt->partNumber)] = worker;
-        worker->Process(*taskOpt);
+        worker->process(*taskOpt);
     }
 
     return true;
@@ -135,8 +152,10 @@ void TaskSchedulerBase::completeSubTask(const std::string& requestId, std::size_
     }
 
     if (!m_tasksRepo.areAllSubTasksCompleted(requestId)) {
-        distributeForReadyWorkers();
+        m_repository.UpdateStatus(requestId, CrackStatus::READY);
     }
+
+    distributeForReadyWorkers();
 }
 
 std::optional<WorkerAnswer> TaskSchedulerBase::saveWorkerAnswer(const WorkerAnswer& answer)
@@ -144,8 +163,27 @@ std::optional<WorkerAnswer> TaskSchedulerBase::saveWorkerAnswer(const WorkerAnsw
     return m_repository.SaveAnswer(answer);
 }
 
-std::optional<WorkerAnswer> TaskSchedulerBase::getAnswer(const std::string& id) const
+std::optional<WorkerAnswer> TaskSchedulerBase::getAnswer(const std::string& id)
 {
+    auto task = m_repository.GetByUUID(id);
+    if (!task) {
+        return std::nullopt;
+    }
+    if (m_tasksRepo.areAllSubTasksCompleted(id)) {
+        return m_repository.GetAnswerByUUID(id);
+    }
+
+    using namespace std::chrono_literals;
+
+    // TODO: проверить, что готовы все неотвалившиеся ответы и только тогда отправить
+    for (std::size_t part = 0; part < m_tasksRepo.getPartsCount(id); part++) {
+        auto lastPing = getLastPingFromWorkerBySubtask(id, m_tasksRepo.getPartsCount(id));
+        if (!lastPing || lastPing.value() < std::chrono::high_resolution_clock::now() - 10s) {
+            UpdateStatus(id, CrackStatus::READY_PARTIAL_ANSWER);
+            // return m_repository.GetAnswerByUUID(id);
+        }
+    }
+
     return m_repository.GetAnswerByUUID(id);
 }
 

@@ -7,12 +7,17 @@
 
 namespace Manager {
 
+// enum class WorkerStatus {
+//     READY,
+//     CONNECTION_LOST,
+// };
+
 class Worker {
 public:
-    explicit Worker(std::shared_ptr<WorkerConnection> connection);
+    explicit Worker(std::shared_ptr<WorkerConnection>);
 
     virtual ~Worker() = default;
-    virtual void Process(const SubTask& task);
+    virtual void process(const SubTask& task);
     virtual bool isReady() const;
     virtual void setReady();
 
@@ -21,4 +26,4 @@ private:
     bool m_isReady;
 };
 
-} // Manager
+} // namespace Manager

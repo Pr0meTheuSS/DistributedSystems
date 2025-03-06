@@ -7,7 +7,8 @@
 #include <userver/utest/using_namespace_userver.hpp>
 
 #include "clients/http_client.hpp"
-#include "components/http_worker_connection.hpp"
+#include "components/brute_force_service_component.hpp"
+#include "components/http_manager_connection.hpp"
 #include "handlers/crack_hash_handler.hpp"
 
 int main(int argc, char* argv[])
@@ -15,6 +16,8 @@ int main(int argc, char* argv[])
     auto component_list = components::MinimalServerComponentList()
                               .Append<userver::components::HttpClient>()
                               .Append<userver::clients::dns::Component>()
+                              .Append<Worker::HttpManagerConnection>()
+                              .Append<Worker::BruteForceServiceComponent>()
                               .Append<Worker::HttpClient>()
                               .Append<Worker::CrackHashHandler>();
 

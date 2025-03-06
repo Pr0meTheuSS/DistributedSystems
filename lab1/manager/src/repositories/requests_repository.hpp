@@ -5,6 +5,7 @@
 
 namespace Manager {
 
+enum class CrackStatus;
 struct CrackRequest;
 struct WorkerAnswer;
 
@@ -13,6 +14,8 @@ public:
     virtual std::optional<CrackRequest> GetByUUID(const std::string&) const = 0;
     virtual std::optional<CrackRequest> Create(const CrackRequest&) = 0;
     virtual std::optional<CrackRequest> UpdateStatus(const CrackRequest&) = 0;
+    virtual std::optional<CrackRequest> UpdateStatus(const std::string&, const CrackStatus&) = 0;
+
     virtual std::optional<WorkerAnswer> GetAnswerByUUID(const std::string&) const = 0;
     virtual std::optional<WorkerAnswer> SaveAnswer(const WorkerAnswer&) = 0;
 

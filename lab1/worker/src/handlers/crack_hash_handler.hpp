@@ -1,11 +1,15 @@
 #pragma once
 
 #include <userver/components/component_list.hpp>
+#include <userver/concurrent/background_task_storage.hpp>
 #include <userver/server/handlers/http_handler_json_base.hpp>
-
 #include <userver/utest/using_namespace_userver.hpp>
 
+#include "components/brute_force_service_component.hpp"
+
 namespace Worker {
+
+class HttpManagerConnection;
 
 class CrackHashHandler final : public userver::server::handlers::HttpHandlerJsonBase {
 public:
@@ -21,8 +25,14 @@ public:
         const userver::formats::json::Value&,
         userver::server::request::RequestContext&) const override;
 
-    // private:
-    // WorkerServiceComponent& m_workerService;
+    ~CrackHashHandler()
+    {
+        m_backgroundTaskStorage.CancelAndWait();
+    }
+
+private:
+    HttpManagerConnection& m_connection;
+    mutable userver::concurrent::BackgroundTaskStorage m_backgroundTaskStorage;
 };
 
 } // namespace Worker

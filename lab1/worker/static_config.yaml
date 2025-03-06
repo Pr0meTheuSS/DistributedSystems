@@ -6,6 +6,16 @@ components_manager:
         fs-task-processor: # Make a separate task processor for filesystem bound tasks.
             worker_threads: 1
 
+        workers-task-processor:
+            thread_name: bg-worker
+            worker_threads: 2
+            os-scheduling: idle
+            task-processor-queue: global-task-queue
+            task-trace:
+                every: 1000
+                max-context-switch-count: 1000
+                logger: default
+
     default_task_processor: main-task-processor # Task processor in which components start.
 
     components: # Configuring components that were registered via component_list
@@ -20,6 +30,10 @@ components_manager:
                     file_path: "@stderr"
                     level: debug
                     overflow_behavior: discard # Drop logs if the system is too busy to write them down.
+        component-brute-force-service:
+
+        component-http-manager-connection:
+
         dns-client:
             fs-task-processor: fs-task-processor
             hosts-file-path: /etc/hosts

@@ -1,10 +1,12 @@
+#pragma once
 #include <iomanip>
 #include <iostream>
-#include <openssl/md5.h> // Библиотека для вычисления MD5
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <openssl/md5.h>
 
 #include "dto/worker_answer.hpp"
 #include "models/sub_task.hpp"
@@ -19,29 +21,25 @@ public:
         totalWords_ = getTotalWordsCount();
     }
 
-    // Метод для получения i-го слова в лексикографическом порядке
     std::string getWordAtIndex(size_t index) const
     {
         if (index >= totalWords_) {
-            return ""; // Если индекс выходит за пределы, возвращаем пустую строку
+            return "";
         }
         return generateWordFromIndex(index);
     }
 
-    // Генерация слова по индексу
     std::string generateWordFromIndex(size_t index) const
     {
         std::string word;
         size_t alphabetSize = alphabet_.size();
 
-        // Генерация каждого символа слова
         while (index > 0 || word.size() < maxLength_) {
             size_t letterIndex = index % alphabetSize;
             word = alphabet_[letterIndex] + word;
             index /= alphabetSize;
         }
 
-        // Заполнение недостающих символов в начале слова (если оно короче maxLength)
         while (word.size() < maxLength_) {
             word = alphabet_[0] + word;
         }
@@ -49,7 +47,6 @@ public:
         return word;
     }
 
-    // Получение общего числа возможных слов
     size_t getTotalWordsCount() const
     {
         size_t total = 0;
@@ -60,20 +57,20 @@ public:
     }
 
 private:
-    std::string alphabet_; // Алфавит для генерации слов
-    size_t maxLength_; // Максимальная длина слов
-    size_t totalWords_; // Общее количество возможных слов
+    std::string alphabet_;
+    size_t maxLength_;
+    size_t totalWords_;
 };
 
-class WorkerService {
+class BruteForceService {
 public:
-    WorkerService(const std::string& alphabet)
+    BruteForceService(const std::string& alphabet)
         : alphabet_(alphabet)
         , generator_(alphabet, 0)
     {
     }
 
-    void process(const SubTask& subTask)
+    virtual WorkerAnswer process(const SubTask& subTask)
     {
         generator_ = LexicographicWordGenerator { alphabet_, subTask.maxLength };
 
@@ -88,7 +85,6 @@ public:
         std::cout << "subTask.partNumber: " << subTask.partNumber << std::endl;
         std::cout << "wordsPerPart: " << wordsPerPart << ", remainingWords: " << remainingWords << std::endl;
 
-        // Рассчитываем startIndex и endIndex для текущей части
         size_t startIndex = wordsPerPart * subTask.partNumber + std::min(subTask.partNumber, remainingWords);
         size_t endIndex = startIndex + wordsPerPart + (subTask.partNumber < remainingWords ? 1 : 0);
 
@@ -102,23 +98,13 @@ public:
             if (word.empty())
                 break;
 
-            // Проверка на совпадение с хешем
             if (computeMD5(word) == subTask.hash) {
                 words.push_back(word);
             }
         }
 
         WorkerAnswer answer = { subTask.requestId, subTask.partNumber, words };
-        resultMap[subTask.requestId] = answer;
-
-        for (const auto& entry : resultMap) {
-            std::cout << "Request ID: " << entry.second.requestId
-                      << ", Part Number: " << entry.second.partNumber << "\nWords: ";
-            for (const auto& word : entry.second.words) {
-                std::cout << word << " ";
-            }
-            std::cout << std::endl;
-        }
+        return resultMap[subTask.requestId] = answer;
     }
 
 private:
@@ -140,21 +126,5 @@ private:
         return ss.str();
     }
 };
-
-// int main() {
-//     // Пример данных для SubTask
-//     SubTask subTask = {
-//         "task1",       // requestId
-//         "9e107d9d372bb6826bd81d3542a419d6", // хэш MD5
-//         3,             // maxLength
-//         2,             // partCount
-//         1              // partNumber
-//     };
-
-//     WorkerService workerService("abcdefghijklmnopqrstuvwxyz0123456789");
-//     workerService.process(subTask);
-
-//     return 0;
-// }
 
 } // namespace Worker
