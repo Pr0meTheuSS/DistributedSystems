@@ -3,10 +3,11 @@
 #include <chrono>
 #include <iostream>
 
-#include <fmt/format.h>
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/utils/async.hpp>
+
+#include <fmt/format.h>
 
 #include "components/http_manager_connection.hpp"
 #include "models/sub_task.hpp"
@@ -29,7 +30,7 @@ userver::formats::json::Value CrackHashHandler::HandleRequestJsonThrow(
     switch (request.GetMethod()) {
     case userver::server::http::HttpMethod::kPost: {
         auto subTask = requestBody.As<SubTask>();
-        BruteForceService workerService("abcdefghijklmnopqrstuvwxyz0123456789");
+        BruteForceService workerService("abcdefghijklmnopqrstuvwxyz0123456789", std::cout);
 
         m_backgroundTaskStorage.AsyncDetach("bf", [this, w = std::move(workerService), s = std::move(subTask)]() mutable {
             using namespace std::chrono_literals;

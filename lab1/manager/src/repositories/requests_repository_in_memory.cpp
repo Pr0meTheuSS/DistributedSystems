@@ -1,8 +1,7 @@
 #include "repositories/requests_repository_in_memory.hpp"
 
-#include <iostream>
-
 #include <fmt/format.h>
+
 #include <sole.fwd.hpp>
 #include <sole.hpp>
 

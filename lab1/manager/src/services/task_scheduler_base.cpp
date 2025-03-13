@@ -1,7 +1,6 @@
 #include "services/task_scheduler_base.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -122,7 +121,6 @@ bool TaskSchedulerBase::distributeForReadyWorkers()
 {
     auto readyWorkers = getReadyWorkers();
     if (readyWorkers.empty()) {
-        std::cout << "[INFO] Нет свободных воркеров\n";
         return false;
     }
 
@@ -178,7 +176,6 @@ std::optional<WorkerAnswer> TaskSchedulerBase::getAnswer(const std::string& id)
         auto lastPing = getLastPingFromWorkerBySubtask(id, m_tasksRepo.getPartsCount(id));
         if (!lastPing || lastPing.value() < std::chrono::high_resolution_clock::now() - 10s) {
             UpdateStatus(id, CrackStatus::READY_PARTIAL_ANSWER);
-            // return m_repository.GetAnswerByUUID(id);
         }
     }
 

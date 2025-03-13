@@ -1,10 +1,9 @@
 #include "handlers/crack_hash_handler.hpp"
 
-#include <iostream>
-
-#include <fmt/format.h>
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
+
+#include <fmt/format.h>
 
 #include "dto/crack_hash_request.hpp"
 #include "dto/crack_hash_response.hpp"

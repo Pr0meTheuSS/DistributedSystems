@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 #include <memory>
 
 #include <userver/clients/http/component.hpp>
@@ -23,7 +24,7 @@ public:
     // // Component is valid after construction and is able to accept requests
     BruteForceServiceComponent(const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context)
-        : BruteForceService("abcdefghijklmnopqrstuvwxyz0123456789")
+        : BruteForceService("abcdefghijklmnopqrstuvwxyz0123456789", std::cout)
         , userver::components::LoggableComponentBase(config, context)
         , m_httpManagerConnection(context.FindComponent<HttpManagerConnection>("component-http-manager-connection"))
     {

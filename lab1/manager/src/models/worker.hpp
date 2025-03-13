@@ -7,11 +7,6 @@
 
 namespace Manager {
 
-// enum class WorkerStatus {
-//     READY,
-//     CONNECTION_LOST,
-// };
-
 class Worker {
 public:
     explicit Worker(std::shared_ptr<WorkerConnection>);

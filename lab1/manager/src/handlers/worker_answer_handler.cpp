@@ -1,7 +1,5 @@
 #include "handlers/worker_answer_handler.hpp"
 
-#include <iostream>
-
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/formats/serialize/common_containers.hpp>
