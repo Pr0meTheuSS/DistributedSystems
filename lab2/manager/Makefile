@@ -9,3 +9,6 @@ test-cov:
 
 cov:
 	go tool cover -html=coverage.out
+
+generate-swagger:
+	swag init -d "./" -g "internal/cmd/main.go"
