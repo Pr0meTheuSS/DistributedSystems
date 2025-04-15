@@ -2,35 +2,32 @@ package app
 
 import (
 	"fmt"
-	"manager/internal/config"
+	"manager/internal/di"
+	"manager/internal/router"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 type App struct {
-	config *config.Config
-	logger *zap.Logger
-	router chi.Router
+	container *di.AppContainer
+}
+
+func NewApp(container *di.AppContainer) *App {
+	return &App{container: container}
 }
 
 func (a *App) Run() error {
-	a.logger.Info("Start application",
-		zap.String("host", a.config.GetHost()),
-		zap.Int64("port", a.config.GetPort()))
+	r := router.NewRouter(a.container)
 
-	serveAddress := fmt.Sprintf("%s:%d", a.config.GetHost(), a.config.GetPort())
+	address := fmt.Sprintf("%s:%d",
+		a.container.Config.GetHost(),
+		a.container.Config.GetPort(),
+	)
 
-	return http.ListenAndServe(serveAddress, a.router)
-}
+	a.container.Logger.Info("Starting server",
+		zap.String("address", address),
+	)
 
-func NewApp(config *config.Config, logger *zap.Logger, router chi.Router) *App {
-	app := &App{
-		config: config,
-		logger: logger,
-		router: router,
-	}
-
-	return app
+	return http.ListenAndServe(address, r)
 }

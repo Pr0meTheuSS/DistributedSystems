@@ -1,26 +1,30 @@
 package main
 
 import (
-	"log"
 	"manager/internal/app"
-	"manager/internal/config"
-	"manager/internal/router"
+	"manager/internal/di"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 func main() {
-	config := config.NewConfig()
-
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("Cannot init zap Logger by call NewProduction() method, err: %s", err.Error())
-	}
+	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
-	router := router.NewRouter(logger)
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		logger.Fatal("Failed to connect to RabbitMQ", zap.Error(err))
+	}
+	defer conn.Close()
 
-	app := app.NewApp(config, logger, router)
+	container, err := di.NewContainer(logger, conn)
+	if err != nil {
+		logger.Fatal("Failed to initialize container", zap.Error(err))
+	}
 
-	log.Fatal(app.Run().Error())
+	app := app.NewApp(container)
+	if err := app.Run(); err != nil {
+		logger.Fatal("Application failed", zap.Error(err))
+	}
 }

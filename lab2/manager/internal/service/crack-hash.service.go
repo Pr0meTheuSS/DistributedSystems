@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"manager/internal/dto"
 	"manager/internal/model"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -14,16 +16,32 @@ type CrackHashServiceInterface interface {
 }
 
 type CrackHashService struct {
-	logger *zap.Logger
+	logger              *zap.Logger
+	subTaskQueueService SubTaskQueueServiceInterface
+	workersAmount       int64
 }
 
-func NewCrackHashService(logger *zap.Logger) CrackHashServiceInterface {
+func NewCrackHashService(logger *zap.Logger, subTaskQueueservice SubTaskQueueServiceInterface, workersAmount int64) CrackHashServiceInterface {
 	return &CrackHashService{
-		logger: logger,
+		logger:              logger,
+		subTaskQueueService: subTaskQueueservice,
+		workersAmount:       workersAmount,
 	}
 }
 
-func (s *CrackHashService) CrackHash(context.Context, model.CrackHashRequest) (*model.CrackHashRecord, error) {
+func (s *CrackHashService) CrackHash(ctx context.Context, request model.CrackHashRequest) (*model.CrackHashRecord, error) {
+	for i := int64(0); i < s.workersAmount; i++ {
+		subTask := dto.SubTask{
+			TaskID:     uuid.NewString(),
+			Hash:       request.Hash,
+			Length:     request.Length,
+			Alphabet:   request.Alphabet,
+			PartNumber: i,
+			PartCount:  s.workersAmount,
+		}
+		s.subTaskQueueService.SendSubTask(ctx, &subTask)
+	}
+
 	return &model.CrackHashRecord{}, nil
 }
 

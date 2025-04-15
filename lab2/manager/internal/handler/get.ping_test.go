@@ -1,4 +1,3 @@
-// handler/ping_handler_test.go
 package handler
 
 import (

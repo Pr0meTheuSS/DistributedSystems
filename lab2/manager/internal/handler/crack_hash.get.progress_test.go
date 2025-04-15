@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Переиспользуем уже существующий mockCrackHashService из других тестов
 
 func TestGetCrackHashProgress_Success(t *testing.T) {
 	duration := 15 * time.Second
