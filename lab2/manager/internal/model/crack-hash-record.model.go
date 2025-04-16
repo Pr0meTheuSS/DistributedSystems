@@ -13,13 +13,15 @@ const (
 )
 
 type CrackHashRecord struct {
-	ID         string
-	Hash       string
-	Alphabet   string
-	Length     int64
-	Status     CrackHashStatus
-	CreatedAt  time.Time
-	FinishedAt *time.Time
+	ID                 string
+	Hash               string
+	Alphabet           string
+	Length             int64
+	Status             CrackHashStatus
+	Answers            *[]string
+	ProgressInPercents float64
+	CreatedAt          time.Time
+	FinishedAt         *time.Time
 }
 
 type CrackHashProgress struct {

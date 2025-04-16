@@ -1,9 +1,12 @@
 package di
 
 import (
+	"log"
 	"manager/internal/config"
+	"manager/internal/db"
 	"manager/internal/handler"
 	"manager/internal/rabbitmq"
+	"manager/internal/repository"
 	"manager/internal/service"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,6 +24,10 @@ type AppContainer struct {
 	CrackHashHandler *handler.CrackHashHandler
 }
 
+const (
+	WorkersAmount = 3
+)
+
 func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContainer, error) {
 	cfg := config.NewConfig() // предположим, ты уже это используешь
 
@@ -31,7 +38,13 @@ func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContaine
 
 	subTaskQueueService := service.NewSubTaskQueueService(logger, *rabbitManager)
 
-	crackHashService := service.NewCrackHashService(logger, subTaskQueueService, 3)
+	db, err := db.NewMongoDatabase("mongodb://root:example@localhost:27017", "bf-service")
+	if err != nil {
+		log.Fatal(err)
+	}
+	requestsRepository := repository.NewRequestsMongoRepository(db, logger)
+
+	crackHashService := service.NewCrackHashService(logger, subTaskQueueService, requestsRepository, WorkersAmount)
 	pingHandler := handler.NewPingHandler(service.NewPingService(logger))
 	crackHashHandler := handler.NewCrackHashHandler(crackHashService)
 
