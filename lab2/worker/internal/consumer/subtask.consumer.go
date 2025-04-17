@@ -3,6 +3,8 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 	"worker/internal/config"
 	"worker/internal/dto"
 	"worker/internal/service"
@@ -69,8 +71,12 @@ func (c *SubTaskConsumer) Consume(ctx context.Context) error {
 
 			c.logger.Info("[🚀] Received task:", zap.Any("task", task))
 
-			// TODO: Реальная обработка задачи
-			c.service.Crack(ctx, &task)
+			go c.service.Crack(ctx, &task)
+			for i := 0; i < 50; i++ {
+				progress := c.service.GetProgress(task.TaskID)
+				time.Sleep(time.Second)
+				fmt.Println("Progress: ", progress)
+			}
 			msg.Ack(false)
 		}
 	}

@@ -1,6 +1,7 @@
 package di
 
 import (
+	"context"
 	"errors"
 	"log"
 	"worker/internal/config"
@@ -36,11 +37,13 @@ func InitContainer() (*AppContainer, error) {
 		log.Fatal(errors.New("cannot create brute force service component"))
 	}
 
-	consumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService)
+	subTasksConsumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService)
+	progressConsumer := consumer.NewProgressConsumer(logger, conn, cfg, bruteForceService)
+	go progressConsumer.Consume(context.Background())
 
 	return &AppContainer{
 		Config:   cfg,
 		RabbitMQ: conn,
-		Consumer: consumer,
+		Consumer: subTasksConsumer,
 	}, nil
 }

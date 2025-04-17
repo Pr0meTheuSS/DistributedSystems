@@ -32,6 +32,15 @@ type CrackHashResultDto struct {
 	Answers []string `json:"answers"`
 }
 
+type ProgressRequest struct {
+	TaskID string `json:"task_id"`
+}
+
+type ProgressResponse struct {
+	TaskID   string  `json:"task_id"`
+	Progress float64 `json:"progress"`
+}
+
 func MapCrackHashRequestToModel(request CrackHashRequestDto) model.CrackHashRequest {
 	return model.CrackHashRequest{
 		Hash:     request.Hash,

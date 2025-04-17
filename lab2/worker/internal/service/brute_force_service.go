@@ -13,8 +13,7 @@ import (
 
 type BruteForceService struct {
 	logger       *zap.Logger
-	progressData sync.Map // map[string]int64
-
+	progressData sync.Map
 }
 
 func NewBruteForceService(logger *zap.Logger) *BruteForceService {
@@ -64,7 +63,7 @@ func (s *BruteForceService) Crack(ctx context.Context, subTask *dto.SubTask) (*d
 		}
 
 		progress++
-		percent := float64(progress*100) / float64(total)
+		percent := float64(progress) / float64(total)
 		s.progressData.Store(subTask.TaskID, percent)
 	}
 
@@ -78,6 +77,7 @@ func (s *BruteForceService) Crack(ctx context.Context, subTask *dto.SubTask) (*d
 
 func (s *BruteForceService) GetProgress(taskID string) float64 {
 	val, ok := s.progressData.Load(taskID)
+	fmt.Println(s.progressData.Load(taskID))
 	if !ok {
 		return -1
 	}

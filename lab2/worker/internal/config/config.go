@@ -8,18 +8,20 @@ import (
 )
 
 type Config struct {
-	RabbitMQURL string
-	QueueName   string
-	WorkerName  string
+	RabbitMQURL       string
+	QueueName         string
+	ProgressQueueName string
+	WorkerName        string
 }
 
 func LoadConfig() *Config {
 	_ = godotenv.Load() // подгружаем .env
 
 	return &Config{
-		RabbitMQURL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
-		QueueName:   getEnv("QUEUE_NAME", "subtask_queue"),
-		WorkerName:  getEnv("WORKER_NAME", "worker-1"),
+		RabbitMQURL:       getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+		QueueName:         getEnv("QUEUE_NAME", "subtask_queue"),
+		WorkerName:        getEnv("WORKER_NAME", "worker-1"),
+		ProgressQueueName: getEnv("WORKER_PROGRESS_QUEUE", "progress-requests"),
 	}
 }
 
