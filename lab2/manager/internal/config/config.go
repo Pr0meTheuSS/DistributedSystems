@@ -1,15 +1,17 @@
 package config
 
 type Config struct {
-	host string
-	port int64
+	host                string
+	port                int64
+	WorkerResponseQueue string
 }
 
 func NewConfig() *Config {
 	// TODO: parse from .env
 	return &Config{
-		host: "localhost",
-		port: 9091,
+		host:                "localhost",
+		port:                9091,
+		WorkerResponseQueue: "answers_queue",
 	}
 }
 

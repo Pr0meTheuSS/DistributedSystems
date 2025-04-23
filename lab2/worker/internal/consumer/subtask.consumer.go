@@ -7,6 +7,7 @@ import (
 	"time"
 	"worker/internal/config"
 	"worker/internal/dto"
+	"worker/internal/producer"
 	"worker/internal/service"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -14,18 +15,21 @@ import (
 )
 
 type SubTaskConsumer struct {
-	service *service.BruteForceService
-	conn    *amqp.Connection
-	config  *config.Config
-	logger  *zap.Logger
+	service  *service.BruteForceService
+	conn     *amqp.Connection
+	producer producer.Producer
+
+	config *config.Config
+	logger *zap.Logger
 }
 
-func NewSubTaskConsumer(logger *zap.Logger, conn *amqp.Connection, cfg *config.Config, service *service.BruteForceService) *SubTaskConsumer {
+func NewSubTaskConsumer(logger *zap.Logger, conn *amqp.Connection, cfg *config.Config, service *service.BruteForceService, producer producer.Producer) *SubTaskConsumer {
 	return &SubTaskConsumer{
-		conn:    conn,
-		config:  cfg,
-		service: service,
-		logger:  logger,
+		conn:     conn,
+		config:   cfg,
+		service:  service,
+		logger:   logger,
+		producer: producer,
 	}
 }
 
@@ -72,11 +76,24 @@ func (c *SubTaskConsumer) Consume(ctx context.Context) error {
 			c.logger.Info("[🚀] Received task:", zap.Any("task", task))
 
 			go c.service.Crack(ctx, &task)
-			for i := 0; i < 50; i++ {
-				progress := c.service.GetProgress(task.TaskID)
+
+			state := c.service.GetTaskState(task.ID)
+			state.TaskID = task.TaskID
+
+			for {
+				state = c.service.GetTaskState(task.ID)
+				state.TaskID = task.TaskID
+
+				c.logger.Info("Sent sub task state", zap.Any("sub task state", state))
+				c.producer.SendToQueue(state)
+				if state.Status == "READY" {
+					fmt.Println("==================================================================")
+					break
+				}
+
 				time.Sleep(time.Second)
-				fmt.Println("Progress: ", progress)
 			}
+			c.producer.SendToQueue(state)
 			msg.Ack(false)
 		}
 	}

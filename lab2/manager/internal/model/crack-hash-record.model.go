@@ -18,7 +18,7 @@ type CrackHashRecord struct {
 	Alphabet           string
 	Length             int64
 	Status             CrackHashStatus
-	Answers            *[]string
+	Answers            []string
 	ProgressInPercents float64
 	CreatedAt          time.Time
 	FinishedAt         *time.Time

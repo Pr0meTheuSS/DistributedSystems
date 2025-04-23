@@ -35,7 +35,6 @@ func (h *CrackHashHandler) GetCrackHashResult(writer http.ResponseWriter, reques
 	}
 
 	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusAccepted)
+	writer.WriteHeader(http.StatusOK)
 	json.NewEncoder(writer).Encode(dto.MapCrackHashResultToDto(*crackHashResult))
-
 }

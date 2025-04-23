@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"worker/internal/dto"
+	"worker/internal/model"
 
 	"go.uber.org/zap"
 )
@@ -14,12 +15,16 @@ import (
 type BruteForceService struct {
 	logger       *zap.Logger
 	progressData sync.Map
+	statusData   sync.Map
+	answerData   sync.Map
 }
 
 func NewBruteForceService(logger *zap.Logger) *BruteForceService {
 	return &BruteForceService{
 		logger:       logger,
 		progressData: sync.Map{},
+		statusData:   sync.Map{},
+		answerData:   sync.Map{},
 	}
 }
 
@@ -46,6 +51,9 @@ func (s *BruteForceService) Crack(ctx context.Context, subTask *dto.SubTask) (*d
 	if begin >= end {
 		return nil, fmt.Errorf("invalid range: begin (%d) >= end (%d)", begin, end)
 	}
+	s.progressData.Store(subTask.ID, 0.0)
+	s.statusData.Store(subTask.ID, "IN_PROGRESS")
+	s.answerData.Store(subTask.ID, []string{})
 
 	expectedHash := strings.ToLower(subTask.Hash)
 	results := make([]string, 0)
@@ -60,28 +68,49 @@ func (s *BruteForceService) Crack(ctx context.Context, subTask *dto.SubTask) (*d
 		if hash == expectedHash {
 			results = append(results, word)
 			s.logger.Info("Match found", zap.String("word", word))
+			s.answerData.Store(subTask.ID, results)
+			s.statusData.Store(subTask.ID, "PARTICALLY_READY")
 		}
 
 		progress++
 		percent := float64(progress) / float64(total)
-		s.progressData.Store(subTask.TaskID, percent)
+		s.progressData.Store(subTask.ID, percent)
 	}
 
-	defer s.progressData.Delete(subTask.TaskID)
-
+	s.progressData.Store(subTask.ID, 1.0)
+	s.statusData.Store(subTask.ID, "READY")
 	return &dto.CrackHashResultDto{
-		ID:      subTask.TaskID,
+		ID:      subTask.ID,
 		Answers: results,
 	}, nil
 }
 
-func (s *BruteForceService) GetProgress(taskID string) float64 {
-	val, ok := s.progressData.Load(taskID)
-	fmt.Println(s.progressData.Load(taskID))
-	if !ok {
-		return -1
+func (s *BruteForceService) GetTaskState(ID string) model.TaskState {
+	progressVal, _ := s.progressData.Load(ID)
+	statusVal, _ := s.statusData.Load(ID)
+	answersVal, _ := s.answerData.Load(ID)
+
+	progress := 0.0
+	if progressVal != nil {
+		progress = progressVal.(float64)
 	}
-	return val.(float64)
+
+	status := "unknown"
+	if statusVal != nil {
+		status = statusVal.(string)
+	}
+
+	var answers []string
+	if answersVal != nil {
+		answers = answersVal.([]string)
+	}
+
+	return model.TaskState{
+		ID:       ID,
+		Status:   status,
+		Progress: progress,
+		Answers:  answers,
+	}
 }
 
 func TotalWords(alphabet string, maxLength int64) int64 {

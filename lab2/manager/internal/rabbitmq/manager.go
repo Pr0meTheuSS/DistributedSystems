@@ -15,6 +15,7 @@ type RabbitMQManager struct {
 	conn          *amqp.Connection
 	logger        *zap.Logger
 	subTasksQueue amqp.Queue
+	answersQueue  amqp.Queue
 }
 
 func NewRabbitMQManager(conn *amqp.Connection, logger *zap.Logger) (*RabbitMQManager, error) {
@@ -29,8 +30,20 @@ func NewRabbitMQManager(conn *amqp.Connection, logger *zap.Logger) (*RabbitMQMan
 		return nil, fmt.Errorf("cannot add confirmation: %w", err)
 	}
 
-	queue, err := ch.QueueDeclare(
+	subtaskQueue, err := ch.QueueDeclare(
 		"subtask_queue",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create queue: %w", err)
+	}
+
+	answersQueue, err := ch.QueueDeclare(
+		"answers_queue",
 		true,
 		false,
 		false,
@@ -44,7 +57,8 @@ func NewRabbitMQManager(conn *amqp.Connection, logger *zap.Logger) (*RabbitMQMan
 	return &RabbitMQManager{
 		conn:          conn,
 		logger:        logger,
-		subTasksQueue: queue,
+		subTasksQueue: subtaskQueue,
+		answersQueue:  answersQueue,
 	}, nil
 }
 

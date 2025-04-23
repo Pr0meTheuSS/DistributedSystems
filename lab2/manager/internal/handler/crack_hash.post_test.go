@@ -34,6 +34,10 @@ func (m *mockCrackHashService) GetCrackHashResult(ctx context.Context, id string
 	return m.result, m.err
 }
 
+func (m *mockCrackHashService) UpdateProgressOrResult(context.Context, dto.WorkerResponseDto) error {
+	return nil
+}
+
 func TestPostCrackHash_Success(t *testing.T) {
 	mockResult := &model.CrackHashRecord{
 		ID:     "abc-123",

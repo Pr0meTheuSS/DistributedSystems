@@ -1,6 +1,7 @@
 package dto
 
 type SubTask struct {
+	ID         string `json:"id"`
 	TaskID     string `json:"task_id"`
 	Hash       string `json:"hash"`
 	Length     int64  `json:"length"`

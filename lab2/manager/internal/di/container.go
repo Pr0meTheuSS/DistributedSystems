@@ -3,6 +3,7 @@ package di
 import (
 	"log"
 	"manager/internal/config"
+	"manager/internal/consumer"
 	"manager/internal/db"
 	"manager/internal/handler"
 	"manager/internal/rabbitmq"
@@ -18,18 +19,15 @@ type AppContainer struct {
 	Config        *config.Config
 	RabbitManager *rabbitmq.RabbitMQManager
 
-	CrackHashService service.CrackHashServiceInterface
+	CrackHashService       service.CrackHashServiceInterface
+	WorkerResponseConsumer *consumer.WorkerResponseConsumer
 
 	PingHandler      *handler.PingHandler
 	CrackHashHandler *handler.CrackHashHandler
 }
 
-const (
-	WorkersAmount = 3
-)
-
 func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContainer, error) {
-	cfg := config.NewConfig() // предположим, ты уже это используешь
+	cfg := config.NewConfig()
 
 	rabbitManager, err := rabbitmq.NewRabbitMQManager(rabbitConn, logger)
 	if err != nil {
@@ -44,16 +42,26 @@ func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContaine
 	}
 	requestsRepository := repository.NewRequestsMongoRepository(db, logger)
 
+	WorkersAmount := int64(3) // TODO: get from rabbit rest api
 	crackHashService := service.NewCrackHashService(logger, subTaskQueueService, requestsRepository, WorkersAmount)
+
 	pingHandler := handler.NewPingHandler(service.NewPingService(logger))
 	crackHashHandler := handler.NewCrackHashHandler(crackHashService)
 
+	workerConsumer := consumer.NewWorkerResponseConsumer(
+		logger,
+		rabbitConn,
+		cfg,
+		crackHashService,
+	)
+
 	return &AppContainer{
-		Logger:           logger,
-		Config:           cfg,
-		RabbitManager:    rabbitManager,
-		CrackHashService: crackHashService,
-		PingHandler:      &pingHandler,
-		CrackHashHandler: crackHashHandler,
+		Logger:                 logger,
+		Config:                 cfg,
+		RabbitManager:          rabbitManager,
+		CrackHashService:       crackHashService,
+		WorkerResponseConsumer: workerConsumer,
+		PingHandler:            &pingHandler,
+		CrackHashHandler:       crackHashHandler,
 	}, nil
 }

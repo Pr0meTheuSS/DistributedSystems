@@ -1,11 +1,11 @@
 package di
 
 import (
-	"context"
 	"errors"
 	"log"
 	"worker/internal/config"
 	"worker/internal/consumer"
+	"worker/internal/producer"
 	"worker/internal/rabbitmq"
 	"worker/internal/service"
 
@@ -32,14 +32,18 @@ func InitContainer() (*AppContainer, error) {
 		return nil, err
 	}
 
+	answersProducer, err := producer.NewProducer(conn, logger, "answers_queue")
+	if err != nil {
+		logger.Error("Failed to create producer", zap.Error(err))
+		panic(err.Error())
+	}
+
 	bruteForceService := service.NewBruteForceService(logger)
 	if bruteForceService == nil {
 		log.Fatal(errors.New("cannot create brute force service component"))
 	}
 
-	subTasksConsumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService)
-	progressConsumer := consumer.NewProgressConsumer(logger, conn, cfg, bruteForceService)
-	go progressConsumer.Consume(context.Background())
+	subTasksConsumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService, *answersProducer)
 
 	return &AppContainer{
 		Config:   cfg,
