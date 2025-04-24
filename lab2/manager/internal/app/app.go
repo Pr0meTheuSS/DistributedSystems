@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"manager/internal/di"
 	"manager/internal/router"
 	"net/http"
@@ -24,18 +25,12 @@ func (a *App) Run() error {
 
 	go func() {
 		if err := a.container.WorkerResponseConsumer.Consume(ctx); err != nil {
-			a.container.Logger.Fatal("WorkerResponseConsumer failed", zap.Error(err))
+			// a.container.Logger.Fatal("WorkerResponseConsumer failed", zap.Error(err))
 		}
 	}()
-
-	// go func() {
-	// 	stop := make(chan os.Signal, 1)
-	// 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	// 	<-stop
-	// 	a.container.Logger.Info("Received shutdown signal, stopping application...")
-	// 	cancel()
-	// 	time.Sleep(2 * time.Second)
-	// }()
+	if err := a.container.CrackHashService.HandleDeadTasks(context.Background()); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	r := router.NewRouter(a.container)
 	address := fmt.Sprintf("%s:%d", a.container.Config.GetHost(), a.container.Config.GetPort())

@@ -22,6 +22,11 @@ type mockCrackHashService struct {
 	err      error
 }
 
+// HandleDeadTasks implements service.CrackHashServiceInterface.
+func (m *mockCrackHashService) HandleDeadTasks(ctx context.Context) error {
+	panic("unimplemented")
+}
+
 func (m *mockCrackHashService) CrackHash(ctx context.Context, req model.CrackHashRequest) (*model.CrackHashRecord, error) {
 	return m.record, m.err
 }

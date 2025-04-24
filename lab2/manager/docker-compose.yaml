@@ -13,16 +13,88 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
-  mongo:
+  manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manager
+    ports:
+      - "9091:9091"
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+      - rabbitmq
+    environment:
+      MONGO_DB_URL: mongodb://root:example@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      WORKER_RESPONSE_QUEUE: answers_queue
+      APP_HOST: 0.0.0.0
+      APP_PORT: 9091
+    restart: always
+
+  mongo1:
     image: mongo:6.0
-    container_name: mongo
+    container_name: mongo1
     ports:
       - "27017:27017"
+    volumes:
+      - mongo1_data:/data/db
+      - ./keyfile:/etc/mongo-keyfile:ro
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo2:
+    image: mongo:6.0
+    container_name: mongo2
+    ports:
+      - "27018:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo2_data:/data/db
+      - ./keyfile:/etc/mongo-keyfile:ro
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo3:
+    image: mongo:6.0
+    container_name: mongo3
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo3_data:/data/db
+      - ./keyfile:/etc/mongo-keyfile:ro
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo-setup:
+    image: mongo:6.0
+    container_name: mongo-setup
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    entrypoint: [
+      "sh", "-c",
+      "
+        sleep 10 &&
+        mongosh --host mongo1:27017 -u root -p example --eval '
+          rs.initiate({
+            _id: \"rs0\",
+            members: [
+              { _id: 0, host: \"mongo1:27017\" },
+              { _id: 1, host: \"mongo2:27017\" },
+              { _id: 2, host: \"mongo3:27017\" }
+            ]
+          })
+        '
+      "
+    ]
 
   mongo-express:
     image: mongo-express
@@ -30,12 +102,19 @@ services:
     ports:
       - "8081:8081"
     environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo1:27017/?replicaSet=rs0
+
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_SERVER: mongo1
     depends_on:
-      - mongo
+      - mongo1
+      - mongo2
+      - mongo3
 
 volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
   rabbitmq_data:
   mongo_data:

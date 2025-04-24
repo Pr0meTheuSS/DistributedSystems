@@ -7,8 +7,11 @@ import (
 	"time"
 	"worker/internal/config"
 	"worker/internal/dto"
+	"worker/internal/model"
 	"worker/internal/producer"
 	"worker/internal/service"
+
+	"slices"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -17,13 +20,14 @@ import (
 type SubTaskConsumer struct {
 	service  *service.BruteForceService
 	conn     *amqp.Connection
-	producer producer.Producer
+	producer *producer.Producer
 
-	config *config.Config
-	logger *zap.Logger
+	statesToSendLetter []model.TaskState
+	config             *config.Config
+	logger             *zap.Logger
 }
 
-func NewSubTaskConsumer(logger *zap.Logger, conn *amqp.Connection, cfg *config.Config, service *service.BruteForceService, producer producer.Producer) *SubTaskConsumer {
+func NewSubTaskConsumer(logger *zap.Logger, conn *amqp.Connection, cfg *config.Config, service *service.BruteForceService, producer *producer.Producer) *SubTaskConsumer {
 	return &SubTaskConsumer{
 		conn:     conn,
 		config:   cfg,
@@ -48,7 +52,7 @@ func (c *SubTaskConsumer) Consume(ctx context.Context) error {
 	msgs, err := ch.Consume(
 		c.config.QueueName,
 		c.config.WorkerName,
-		false, // autoAck=false → вручную подтверждаем
+		false,
 		false,
 		false,
 		false,
@@ -66,9 +70,21 @@ func (c *SubTaskConsumer) Consume(ctx context.Context) error {
 			c.logger.Info("Shutting down consumer")
 			return nil
 		case msg := <-msgs:
+			// TODO: tryResendToQueue()
+			if len(c.statesToSendLetter) != 0 {
+				fmt.Println(c.statesToSendLetter)
+				for i := 0; i < len(c.statesToSendLetter); i++ {
+					state := c.statesToSendLetter[i]
+
+					if err := c.producer.SendToQueue(state); err == nil {
+						c.statesToSendLetter = slices.Delete(c.statesToSendLetter, i, i+1)
+						i--
+					}
+				}
+			}
+
 			var task dto.SubTask
 			if err := json.Unmarshal(msg.Body, &task); err != nil {
-				c.logger.Error("[❌] Failed to decode message:", zap.Error(err))
 				msg.Nack(false, false)
 				continue
 			}
@@ -80,20 +96,22 @@ func (c *SubTaskConsumer) Consume(ctx context.Context) error {
 			state := c.service.GetTaskState(task.ID)
 			state.TaskID = task.TaskID
 
-			for {
+			for state.Status != "READY" {
 				state = c.service.GetTaskState(task.ID)
 				state.TaskID = task.TaskID
 
-				c.logger.Info("Sent sub task state", zap.Any("sub task state", state))
 				c.producer.SendToQueue(state)
-				if state.Status == "READY" {
-					fmt.Println("==================================================================")
-					break
-				}
 
 				time.Sleep(time.Second)
+				fmt.Println(c.statesToSendLetter)
 			}
-			c.producer.SendToQueue(state)
+
+			if err := c.producer.SendToQueue(state); err != nil {
+				c.logger.Error("Error while send sub task state to queue", zap.Error(err))
+				c.statesToSendLetter = append(c.statesToSendLetter, state)
+			}
+
+			fmt.Println(c.statesToSendLetter)
 			msg.Ack(false)
 		}
 	}

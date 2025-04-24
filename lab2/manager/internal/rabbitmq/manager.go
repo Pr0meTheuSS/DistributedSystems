@@ -12,67 +12,101 @@ import (
 )
 
 type RabbitMQManager struct {
+	connStr       string
 	conn          *amqp.Connection
 	logger        *zap.Logger
 	subTasksQueue amqp.Queue
 	answersQueue  amqp.Queue
+	done          chan bool
+	isConnected   bool
 }
 
-func NewRabbitMQManager(conn *amqp.Connection, logger *zap.Logger) (*RabbitMQManager, error) {
+func (m *RabbitMQManager) GetChannel() (*amqp.Channel, error) {
+	if !m.isConnected {
+		return nil, fmt.Errorf("RabbitMQ not connected")
+	}
+
+	ch, err := m.conn.Channel()
+	if err != nil {
+		m.logger.Error("Failed to get channel", zap.Error(err))
+		return nil, err
+	}
+
+	return ch, nil
+}
+
+func NewRabbitMQManager(connStr string, logger *zap.Logger) (*RabbitMQManager, error) {
+	manager := &RabbitMQManager{
+		connStr:     connStr,
+		logger:      logger,
+		done:        make(chan bool),
+		isConnected: false,
+	}
+
+	go manager.handleReconnect()
+	return manager, nil
+}
+
+func (m *RabbitMQManager) handleReconnect() {
+	for {
+		if m.connect() {
+			m.logger.Info("Successfully connected to RabbitMQ")
+			break
+		}
+		m.logger.Warn("Retrying RabbitMQ connection in 5 seconds...")
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func (m *RabbitMQManager) connect() bool {
+	conn, err := amqp.Dial(m.connStr)
+	if err != nil {
+		m.logger.Error("Failed to connect to RabbitMQ", zap.Error(err))
+		return false
+	}
+
 	ch, err := conn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("cannot open channel: %w", err)
+		m.logger.Error("Failed to open channel", zap.Error(err))
+		return false
 	}
-	defer ch.Close()
 
-	err = ch.Confirm(false)
+	subtaskQueue, err := ch.QueueDeclare("subtask_queue", true, false, false, false, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot add confirmation: %w", err)
+		m.logger.Error("Failed to declare subtask queue", zap.Error(err))
+		return false
 	}
 
-	subtaskQueue, err := ch.QueueDeclare(
-		"subtask_queue",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
+	answersQueue, err := ch.QueueDeclare("answers_queue", true, false, false, false, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create queue: %w", err)
+		m.logger.Error("Failed to declare answers queue", zap.Error(err))
+		return false
 	}
 
-	answersQueue, err := ch.QueueDeclare(
-		"answers_queue",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create queue: %w", err)
-	}
+	m.conn = conn
+	m.subTasksQueue = subtaskQueue
+	m.answersQueue = answersQueue
+	m.isConnected = true
 
-	return &RabbitMQManager{
-		conn:          conn,
-		logger:        logger,
-		subTasksQueue: subtaskQueue,
-		answersQueue:  answersQueue,
-	}, nil
+	go m.monitorConnection()
+
+	return true
+}
+
+func (m *RabbitMQManager) monitorConnection() {
+	closeChan := m.conn.NotifyClose(make(chan *amqp.Error))
+	err := <-closeChan
+	m.logger.Warn("RabbitMQ connection closed", zap.Error(err))
+	m.isConnected = false
+	go m.handleReconnect()
 }
 
 func (m *RabbitMQManager) PublishSubtask(ctx context.Context, subTask *dto.SubTask) error {
-	ch, err := m.conn.Channel()
+	ch, err := m.GetChannel()
 	if err != nil {
-		m.logger.Error("Failed to open channel", zap.Error(err))
-		return fmt.Errorf("failed to open channel: %w", err)
+		return fmt.Errorf("cannot get channel: %w", err)
 	}
-	defer func() {
-		if cerr := ch.Close(); cerr != nil {
-			m.logger.Warn("Failed to close channel", zap.Error(cerr))
-		}
-	}()
+	defer ch.Close()
 
 	err = ch.Confirm(false)
 	if err != nil {
@@ -111,11 +145,9 @@ func (m *RabbitMQManager) PublishSubtask(ctx context.Context, subTask *dto.SubTa
 			m.logger.Info("Message confirmed by RabbitMQ")
 			return nil
 		}
-
 		m.logger.Warn("Message was not acknowledged by RabbitMQ (nack)")
 		return fmt.Errorf("message not acknowledged")
 	case <-time.After(5 * time.Second):
-
 		m.logger.Error("Timeout waiting for RabbitMQ confirmation")
 		return fmt.Errorf("confirmation timeout")
 	}

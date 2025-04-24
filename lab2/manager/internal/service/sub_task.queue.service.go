@@ -15,10 +15,10 @@ type SubTaskQueueServiceInterface interface {
 
 type SubTaskQueueService struct {
 	logger          *zap.Logger
-	rabbitmqManager rabbitmq.RabbitMQManager
+	rabbitmqManager *rabbitmq.RabbitMQManager
 }
 
-func NewSubTaskQueueService(logger *zap.Logger, rabbitmqManager rabbitmq.RabbitMQManager) SubTaskQueueServiceInterface {
+func NewSubTaskQueueService(logger *zap.Logger, rabbitmqManager *rabbitmq.RabbitMQManager) SubTaskQueueServiceInterface {
 	return &SubTaskQueueService{
 		logger:          logger,
 		rabbitmqManager: rabbitmqManager,

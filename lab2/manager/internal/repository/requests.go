@@ -61,7 +61,7 @@ func (r *RequestsMongoRepository) MarkSubTaskAsFinished(ctx context.Context, sub
 	filter := bson.M{"id": subTaskID}
 	update := bson.M{
 		"$set": bson.M{
-			"status":   "FINISHED",
+			"status":   "READY",
 			"progress": 1.0,
 			"answers":  answers,
 		},
@@ -76,7 +76,7 @@ func (r *RequestsMongoRepository) MarkSubTaskAsFinished(ctx context.Context, sub
 func (r *RequestsMongoRepository) AreAllSubTasksFinished(ctx context.Context, taskID string) (bool, error) {
 	filter := bson.M{
 		"task_id": taskID,
-		"status":  bson.M{"$ne": "FINISHED"},
+		"status":  bson.M{"$ne": "READY"},
 	}
 
 	count, err := r.subTasksCollection.CountDocuments(ctx, filter)
@@ -164,6 +164,25 @@ func (r *RequestsMongoRepository) Update(ctx context.Context, record *model.Crac
 	return &updated, nil
 }
 
+func (r *RequestsMongoRepository) GetSubTasksByParentTaskID(ctx context.Context, parentTaskID string) ([]*model.SubTask, error) {
+	var results []*model.SubTask
+
+	filter := bson.M{"taskid": parentTaskID}
+	cursor, err := r.subTasksCollection.Find(ctx, filter)
+	if err != nil {
+		r.logger.Error("Failed to find subtasks by parent task ID", zap.Error(err))
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if err := cursor.All(ctx, &results); err != nil {
+		r.logger.Error("Failed to get all subtasks by parent task ID", zap.Error(err))
+		return nil, err
+	}
+
+	return results, nil
+}
+
 func (r *RequestsMongoRepository) UpdateSubTaskProgress(ctx context.Context, subTaskID string, progress float64) error {
 	filter := bson.M{"id": subTaskID}
 	update := bson.M{
@@ -193,4 +212,23 @@ func (r *RequestsMongoRepository) GetSubTaskByID(ctx context.Context, subTaskID 
 	}
 
 	return &subTask, nil
+}
+
+func (r *RequestsMongoRepository) GetAllPendingTasks(ctx context.Context) ([]*model.CrackHashRecord, error) {
+	var results []*model.CrackHashRecord
+
+	filter := bson.M{"status": "PENDING"}
+	cursor, err := r.subTasksCollection.Find(ctx, filter)
+	if err != nil {
+		r.logger.Error("Failed to find subtasks for collecting answers", zap.Error(err))
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if err := cursor.All(ctx, &results); err != nil {
+		r.logger.Error("Failed to get all pending subtasks", zap.Error(err))
+		return nil, err
+	}
+
+	return results, nil
 }

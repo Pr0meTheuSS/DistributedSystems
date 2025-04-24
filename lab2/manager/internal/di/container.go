@@ -10,7 +10,6 @@ import (
 	"manager/internal/repository"
 	"manager/internal/service"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
@@ -26,17 +25,17 @@ type AppContainer struct {
 	CrackHashHandler *handler.CrackHashHandler
 }
 
-func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContainer, error) {
+func NewContainer(logger *zap.Logger, rabbitConnUrl string) (*AppContainer, error) {
 	cfg := config.NewConfig()
 
-	rabbitManager, err := rabbitmq.NewRabbitMQManager(rabbitConn, logger)
+	rabbitManager, err := rabbitmq.NewRabbitMQManager(rabbitConnUrl, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	subTaskQueueService := service.NewSubTaskQueueService(logger, *rabbitManager)
+	subTaskQueueService := service.NewSubTaskQueueService(logger, rabbitManager)
 
-	db, err := db.NewMongoDatabase("mongodb://root:example@localhost:27017", "bf-service")
+	db, err := db.NewMongoDatabase(cfg.GetMongoDbUrl(), "bf-service")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +49,7 @@ func NewContainer(logger *zap.Logger, rabbitConn *amqp.Connection) (*AppContaine
 
 	workerConsumer := consumer.NewWorkerResponseConsumer(
 		logger,
-		rabbitConn,
+		rabbitManager,
 		cfg,
 		crackHashService,
 	)

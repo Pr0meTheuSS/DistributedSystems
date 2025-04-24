@@ -32,7 +32,7 @@ func InitContainer() (*AppContainer, error) {
 		return nil, err
 	}
 
-	answersProducer, err := producer.NewProducer(conn, logger, "answers_queue")
+	answersProducer, err := producer.NewProducer(conn, logger, cfg.RabbitMQURL, "answers_queue")
 	if err != nil {
 		logger.Error("Failed to create producer", zap.Error(err))
 		panic(err.Error())
@@ -43,7 +43,7 @@ func InitContainer() (*AppContainer, error) {
 		log.Fatal(errors.New("cannot create brute force service component"))
 	}
 
-	subTasksConsumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService, *answersProducer)
+	subTasksConsumer := consumer.NewSubTaskConsumer(logger, conn, cfg, bruteForceService, answersProducer)
 
 	return &AppContainer{
 		Config:   cfg,
