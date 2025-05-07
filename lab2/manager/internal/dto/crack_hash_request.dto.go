@@ -25,6 +25,7 @@ type CrackHashProgressDto struct {
 	ID                      string  `json:"id"`
 	ProgressInPercents      float64 `json:"progress_in_percents"`
 	CurrentHandlingDuration string  `json:"current_handling_duration"`
+	Hash                    string  `json:"hash"`
 }
 
 type CrackHashResultDto struct {
@@ -57,6 +58,7 @@ func MapCrackHashProgressToDto(progress model.CrackHashProgress) CrackHashProgre
 		ID:                      progress.RecordID,
 		ProgressInPercents:      progress.ProgressInPercents,
 		CurrentHandlingDuration: progress.CurrentHandlingDuration.String(),
+		Hash:                    progress.Hash,
 	}
 }
 

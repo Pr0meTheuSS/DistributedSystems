@@ -59,6 +59,7 @@ func (m *RabbitMQManager) handleReconnect() {
 }
 
 func (m *RabbitMQManager) connect() bool {
+	fmt.Println("Connection string:", m.connStr)
 	conn, err := amqp.Dial(m.connStr)
 	if err != nil {
 		m.logger.Error("Failed to connect to RabbitMQ", zap.Error(err))

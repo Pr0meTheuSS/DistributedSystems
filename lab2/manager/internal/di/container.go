@@ -25,24 +25,23 @@ type AppContainer struct {
 	CrackHashHandler *handler.CrackHashHandler
 }
 
-func NewContainer(logger *zap.Logger, rabbitConnUrl string) (*AppContainer, error) {
+func NewContainer(logger *zap.Logger) (*AppContainer, error) {
 	cfg := config.NewConfig()
 
-	rabbitManager, err := rabbitmq.NewRabbitMQManager(rabbitConnUrl, logger)
+	rabbitManager, err := rabbitmq.NewRabbitMQManager(cfg.GetRabbitMQUrl(), logger)
 	if err != nil {
 		return nil, err
 	}
 
 	subTaskQueueService := service.NewSubTaskQueueService(logger, rabbitManager)
 
-	db, err := db.NewMongoDatabase(cfg.GetMongoDbUrl(), "bf-service")
+	db, err := db.NewMongoDatabase(cfg.GetMongoDbUrl(), cfg.GetDBName())
 	if err != nil {
 		log.Fatal(err)
 	}
 	requestsRepository := repository.NewRequestsMongoRepository(db, logger)
 
-	WorkersAmount := int64(3) // TODO: get from rabbit rest api
-	crackHashService := service.NewCrackHashService(logger, subTaskQueueService, requestsRepository, WorkersAmount)
+	crackHashService := service.NewCrackHashService(logger, subTaskQueueService, requestsRepository, cfg.GetWorkersAmount())
 
 	pingHandler := handler.NewPingHandler(service.NewPingService(logger))
 	crackHashHandler := handler.NewCrackHashHandler(crackHashService)

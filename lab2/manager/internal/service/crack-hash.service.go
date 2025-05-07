@@ -136,7 +136,9 @@ func (s *CrackHashService) CrackHash(ctx context.Context, request model.CrackHas
 }
 
 func (s *CrackHashService) GetCrackHashProgress(ctx context.Context, requestID string) (*model.CrackHashProgress, error) {
+	s.logger.Info("call service.GetCrackHashProgress()", zap.String("requestID", requestID))
 	subTasks, err := s.repository.GetSubTasksByParentTaskID(ctx, requestID)
+
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +150,9 @@ func (s *CrackHashService) GetCrackHashProgress(ctx context.Context, requestID s
 
 	progress := &model.CrackHashProgress{
 		RecordID:                requestID,
-		ProgressInPercents:      totalProgress / float64(len(subTasks)),
+		ProgressInPercents:      100.0 * totalProgress / float64(len(subTasks)),
 		CurrentHandlingDuration: 0,
+		Hash:                    subTasks[0].Hash,
 	}
 
 	return progress, nil

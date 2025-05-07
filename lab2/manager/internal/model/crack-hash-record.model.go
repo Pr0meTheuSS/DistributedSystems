@@ -27,6 +27,7 @@ type CrackHashRecord struct {
 type CrackHashProgress struct {
 	RecordID                string
 	ProgressInPercents      float64
+	Hash                    string
 	CurrentHandlingDuration time.Duration
 }
 

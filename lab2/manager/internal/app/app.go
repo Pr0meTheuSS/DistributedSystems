@@ -25,7 +25,7 @@ func (a *App) Run() error {
 
 	go func() {
 		if err := a.container.WorkerResponseConsumer.Consume(ctx); err != nil {
-			// a.container.Logger.Fatal("WorkerResponseConsumer failed", zap.Error(err))
+			a.container.Logger.Fatal("WorkerResponseConsumer failed", zap.Error(err))
 		}
 	}()
 	if err := a.container.CrackHashService.HandleDeadTasks(context.Background()); err != nil {

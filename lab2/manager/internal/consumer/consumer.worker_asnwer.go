@@ -58,7 +58,7 @@ func (c *WorkerResponseConsumer) consumeOnce(ctx context.Context) error {
 	}
 
 	msgs, err := ch.Consume(
-		c.config.WorkerResponseQueue,
+		c.config.GetWorkerResponseQueue(),
 		"manager_consumer",
 		false,
 		false,
@@ -70,7 +70,7 @@ func (c *WorkerResponseConsumer) consumeOnce(ctx context.Context) error {
 		return fmt.Errorf("failed to start consuming: %w", err)
 	}
 
-	c.logger.Info("[📥] WorkerResponseConsumer started")
+	c.logger.Info("WorkerResponseConsumer started")
 
 	for {
 		select {
