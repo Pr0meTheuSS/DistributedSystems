@@ -1,0 +1,146 @@
+definitions:
+  dto.CrackHashProgressDto:
+    properties:
+      current_handling_duration:
+        type: string
+      id:
+        type: string
+      progress_in_percents:
+        type: number
+    type: object
+  dto.CrackHashRequestDto:
+    properties:
+      alphabet:
+        type: string
+      hash:
+        type: string
+      length:
+        type: integer
+    type: object
+  dto.CrackHashResponseDto:
+    properties:
+      alphabet:
+        type: string
+      create_at:
+        type: string
+      finished_at:
+        type: string
+      hash:
+        type: string
+      id:
+        type: string
+      length:
+        type: integer
+      status:
+        type: string
+    type: object
+  dto.CrackHashResultDto:
+    properties:
+      answers:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/hash-cracks:
+    post:
+      consumes:
+      - application/json
+      description: Принимает хэш и максимальную длину пароля, возвращает ID задачи
+        и статус
+      parameters:
+      - description: Параметры задачи
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CrackHashRequestDto'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/dto.CrackHashResponseDto'
+        "400":
+          description: Невалидный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка на сервере
+          schema:
+            type: string
+      summary: Отправить задачу на перебор хэша
+      tags:
+      - crack-hash
+  /api/hash-cracks/{id}/progress:
+    get:
+      consumes:
+      - application/json
+      description: Принимает ID задачи, возвращает текущий прогресс выполнения задачи.
+      parameters:
+      - description: Уникальный идентификатор задачи (ID)
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CrackHashProgressDto'
+        "400":
+          description: Невалидный запрос
+          schema:
+            type: string
+        "404":
+          description: Задача по данному идентификатору не найдена
+          schema:
+            type: string
+        "500":
+          description: Ошибка на сервере
+          schema:
+            type: string
+      summary: Получить текущий прогресс задачи.
+      tags:
+      - crack-hash
+  /api/hash-cracks/{id}/result:
+    get:
+      consumes:
+      - application/json
+      description: Принимает ID задачи, возвращает результат выполнения.
+      parameters:
+      - description: Уникальный идентификатор задачи (Id)
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CrackHashResultDto'
+        "400":
+          description: Невалидный запрос
+          schema:
+            type: string
+        "404":
+          description: Задача по данному идентификатору не найдена
+          schema:
+            type: string
+        "500":
+          description: Ошибка на сервере
+          schema:
+            type: string
+      summary: Получить результат задачи.
+      tags:
+      - crack-hash
+swagger: "2.0"
